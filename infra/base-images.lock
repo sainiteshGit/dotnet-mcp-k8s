@@ -13,4 +13,4 @@
 # (gate is added in a later phase alongside the Dockerfiles).
 
 # ASP.NET Core runtime — used by both src/WebApp and src/McpServer images.
-ASPNET_RUNTIME=mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:<digest>
+ASPNET_RUNTIME=mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:1e37a8236c558ae31bd6bc8144e38e6036b73cf1b0616fe56d79e60babb9d93b

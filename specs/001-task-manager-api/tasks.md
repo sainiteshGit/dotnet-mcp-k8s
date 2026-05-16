@@ -82,19 +82,19 @@
 
 ### Shared Azure infra (Bicep modules used by both services)
 
-- [ ] T031 [P] Create [infra/modules/uami.bicep](../../infra/modules/uami.bicep) — UAMI `uami-taskmgr` with `FederatedIdentityCredentials` binding to `system:serviceaccount:taskmgr:taskmgr-sa` (AKS OIDC issuer)
-- [ ] T032 [P] Create [infra/modules/acr.bicep](../../infra/modules/acr.bicep) — ACR Basic + `AcrPull` role assignment to the UAMI
-- [ ] T033 [P] Create [infra/modules/loganalytics.bicep](../../infra/modules/loganalytics.bicep) — Log Analytics workspace + Application Insights
-- [ ] T034 [P] Create [infra/modules/aks.bicep](../../infra/modules/aks.bicep) — created only if `infra/aks.discovered.json` indicates no existing AKS (per `scripts/aks-discover.sh`)
-- [ ] T035 [infra/main.bicep](../../infra/main.bicep) wires modules from T031–T034; reads RG = `sainitesh-test`; subscription pinned via deployment-time check
-- [ ] T036 [P] Create [infra/params/dev.bicepparam](../../infra/params/dev.bicepparam) and [infra/params/prod.bicepparam](../../infra/params/prod.bicepparam) with environment-specific parameter values
+- [X] T031 [P] Create [infra/modules/uami.bicep](../../infra/modules/uami.bicep) — UAMI `uami-taskmgr` with `FederatedIdentityCredentials` binding to `system:serviceaccount:taskmgr:taskmgr-sa` (AKS OIDC issuer)
+- [X] T032 [P] Create [infra/modules/acr.bicep](../../infra/modules/acr.bicep) — ACR Basic + `AcrPull` role assignment to the UAMI
+- [X] T033 [P] Create [infra/modules/loganalytics.bicep](../../infra/modules/loganalytics.bicep) — Log Analytics workspace + Application Insights
+- [X] T034 [P] Create [infra/modules/aks.bicep](../../infra/modules/aks.bicep) — created only if `infra/aks.discovered.json` indicates no existing AKS (per `scripts/aks-discover.sh`)
+- [X] T035 [infra/main.bicep](../../infra/main.bicep) wires modules from T031–T034; reads RG = `sainitesh-test`; subscription pinned via deployment-time check
+- [X] T036 [P] Create [infra/params/dev.bicepparam](../../infra/params/dev.bicepparam) and [infra/params/prod.bicepparam](../../infra/params/prod.bicepparam) with environment-specific parameter values
 
 ### Shared Kustomize base (namespace + service account)
 
-- [ ] T037 [P] Create [deploy/base/namespace.yaml](../../deploy/base/namespace.yaml) (`taskmgr` namespace)
-- [ ] T038 Create [deploy/base/serviceaccount.yaml](../../deploy/base/serviceaccount.yaml) — `taskmgr-sa` annotated `azure.workload.identity/client-id: <uami-clientId>` (templated for Kustomize replacement)
-- [ ] T039 [P] Create [deploy/base/kustomization.yaml](../../deploy/base/kustomization.yaml) referencing namespace + serviceaccount (other resources added by story phases)
-- [ ] T040 [P] Create [deploy/overlays/dev/kustomization.yaml](../../deploy/overlays/dev/kustomization.yaml) and [deploy/overlays/prod/kustomization.yaml](../../deploy/overlays/prod/kustomization.yaml) (empty patches; story-specific patches added later)
+- [X] T037 [P] Create [deploy/base/namespace.yaml](../../deploy/base/namespace.yaml) (`taskmgr` namespace)
+- [X] T038 Create [deploy/base/serviceaccount.yaml](../../deploy/base/serviceaccount.yaml) — `taskmgr-sa` annotated `azure.workload.identity/client-id: <uami-clientId>` (templated for Kustomize replacement)
+- [X] T039 [P] Create [deploy/base/kustomization.yaml](../../deploy/base/kustomization.yaml) referencing namespace + serviceaccount (other resources added by story phases)
+- [X] T040 [P] Create [deploy/overlays/dev/kustomization.yaml](../../deploy/overlays/dev/kustomization.yaml) and [deploy/overlays/prod/kustomization.yaml](../../deploy/overlays/prod/kustomization.yaml) (empty patches; story-specific patches added later)
 
 **Checkpoint**: Foundation ready — both projects compile, redaction enricher and correlation-id middleware are GREEN, shared infra modules exist, namespace + service account ready. Story phases may now begin in parallel.
 

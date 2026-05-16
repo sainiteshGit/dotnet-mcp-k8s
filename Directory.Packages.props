@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enable Central Package Management for the entire solution. -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <!--
+    Concrete <PackageVersion .../> entries are added by Phase 2 tasks
+    (T017 / T018 / T019 / T020) when projects are scaffolded. Until then
+    this file only enables the feature; an empty ItemGroup is fine.
+  -->
+  <ItemGroup>
+  </ItemGroup>
+</Project>

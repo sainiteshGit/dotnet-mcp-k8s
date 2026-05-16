@@ -1,0 +1,40 @@
+# Build artifacts
+bin/
+obj/
+out/
+
+# Test projects (never copied into runtime images)
+tests/
+
+# Source control
+.git/
+.gitignore
+.gitattributes
+
+# Infra / deploy / docs (not part of the image build context)
+infra/
+deploy/
+specs/
+docs/
+
+# IDE noise
+.vscode/
+.idea/
+*.user
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Logs / local env
+*.log
+.env
+.env.*
+
+# CI / hooks (not needed in image)
+.github/
+.specify/
+
+# Compose / overrides
+docker-compose*.yml
+*.dockerfile.local

@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <!-- Pinned by plan.md: both services target net10.0 (LTS). -->
+    <TargetFramework>net10.0</TargetFramework>
+
+    <!-- Language / safety defaults applied to every project in the solution. -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+
+    <!-- Deterministic / reproducible builds (helps Trivy + image digest pinning). -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition=" '$(CI)' == 'true' ">true</ContinuousIntegrationBuild>
+
+    <!-- Disable telemetry inside the build host. -->
+    <DOTNET_CLI_TELEMETRY_OPTOUT>1</DOTNET_CLI_TELEMETRY_OPTOUT>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,148 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Constitution: GitHub OIDC -> UAMI; no client secret anywhere.
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AZURE_SUBSCRIPTION_ID: d3c24b47-6f06-4152-8ade-6be38ba31c8c
+  AZURE_RESOURCE_GROUP: sainitesh-test
+  AZURE_REGION: eastus
+  DOTNET_VERSION: "10.0.x"
+
+jobs:
+  # ----------------------------------------------------------------------
+  # Job 1: Azure context guard (T012). Blocks EVERYTHING downstream.
+  # ----------------------------------------------------------------------
+  assert-context:
+    name: Assert Azure context
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Assert subscription + resource group
+        shell: bash
+        run: |
+          chmod +x scripts/assert-azure-context.sh
+          scripts/assert-azure-context.sh "${AZURE_RESOURCE_GROUP}"
+
+  # ----------------------------------------------------------------------
+  # Job 2: Region availability guard (T012a). Blocks all infra/deploy jobs.
+  # ----------------------------------------------------------------------
+  assert-region:
+    name: Assert region availability
+    needs: assert-context
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Assert region SKU availability
+        shell: bash
+        run: |
+          chmod +x scripts/assert-region-availability.sh
+          # Region is sourced from infra/params/<env>.bicepparam in later phases;
+          # for now we assert the v1 default explicitly.
+          scripts/assert-region-availability.sh "${AZURE_REGION}"
+
+  # ----------------------------------------------------------------------
+  # Job 3: Resource-provider registration guard (T012b). Blocks all
+  # infra/deploy jobs.
+  # ----------------------------------------------------------------------
+  assert-providers:
+    name: Assert resource providers registered
+    needs: assert-region
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Assert required RPs registered
+        shell: bash
+        run: |
+          chmod +x scripts/assert-providers-registered.sh
+          scripts/assert-providers-registered.sh
+
+  # ----------------------------------------------------------------------
+  # Build / test / scan / push / deploy — skeletons wired by later phases.
+  # ----------------------------------------------------------------------
+  build:
+    name: Build
+    needs: assert-providers
+    runs-on: ubuntu-latest
+    steps:
+      - name: TODO(Phase 3 T069) — dotnet build TaskManager.sln
+        run: echo "build job skeleton — wired by T069"
+
+  unit-tests:
+    name: Unit tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: TODO(Phase 3 T069 / Phase 4 T101) — dotnet test with ≥80% coverage gate
+        run: echo "unit-tests job skeleton — wired by T069 and T101"
+
+  integration-tests:
+    name: Integration tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: TODO(Phase 3 T069) — Testcontainers.PostgreSql integration tests
+        run: echo "integration-tests job skeleton — wired by T069"
+
+  trivy-scan:
+    name: Trivy CVE scan
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: TODO(Phase 5 T115) — Trivy HIGH/CRITICAL gate on both images
+        run: echo "trivy-scan job skeleton — wired by T115"
+
+  push:
+    name: Push images
+    needs: trivy-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: TODO(Phase 3 T070 / Phase 4 T102) — build and push both images to ACR
+        run: echo "push job skeleton — wired by T070 and T102"
+
+  deploy:
+    name: Deploy
+    needs: push
+    runs-on: ubuntu-latest
+    steps:
+      - name: TODO(Phase 5 T116) — kubectl apply -k deploy/overlays/<env> after migrate Job
+        run: echo "deploy job skeleton — wired by T116"

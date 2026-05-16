@@ -1,0 +1,240 @@
+openapi: 3.1.0
+info:
+  title: Task Manager API
+  version: "1.0.0"
+  summary: Versioned REST API for managing tasks. Owned by the Web App service.
+  description: |
+    Source of truth for the Task resource. All endpoints are versioned under `/api/v1/`.
+    Error responses follow a uniform envelope. Unknown request fields are ignored
+    (forward-compatibility per FR-023). v1 is unauthenticated (in-cluster only); an
+    auth layer may be added later without breaking the contract (FR-024).
+servers:
+  - url: http://webapp.taskmgr.svc.cluster.local
+    description: In-cluster ClusterIP Service (no public ingress in v1).
+
+paths:
+  /healthz:
+    get:
+      summary: Liveness probe
+      tags: [Health]
+      responses:
+        "200": { description: Process is alive. }
+  /readyz:
+    get:
+      summary: Readiness probe (includes DB reachability)
+      tags: [Health]
+      responses:
+        "200": { description: Ready to serve traffic. }
+        "503":
+          description: Not ready.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/v1/tasks:
+    post:
+      summary: Create a task (FR-010)
+      tags: [Tasks]
+      parameters:
+        - $ref: "#/components/parameters/CorrelationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateTaskRequest" }
+      responses:
+        "201":
+          description: Task created.
+          headers:
+            Location:
+              schema: { type: string }
+              description: URI of the created task.
+            X-Correlation-Id:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400":
+          description: Validation failure.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    get:
+      summary: List tasks with filters and pagination (FR-011)
+      tags: [Tasks]
+      parameters:
+        - $ref: "#/components/parameters/CorrelationId"
+        - { in: query, name: status,     required: false, schema: { $ref: "#/components/schemas/TaskStatus"   } }
+        - { in: query, name: priority,   required: false, schema: { $ref: "#/components/schemas/TaskPriority" } }
+        - { in: query, name: due_before, required: false, schema: { type: string, format: date } }
+        - { in: query, name: due_after,  required: false, schema: { type: string, format: date } }
+        - { in: query, name: page,       required: false, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: page_size,  required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200":
+          description: A page of tasks.
+          headers:
+            X-Correlation-Id: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskListPage" }
+        "400":
+          description: Bad pagination/filter parameters.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  /api/v1/tasks/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/CorrelationId"
+    get:
+      summary: Read a task by id (FR-012)
+      tags: [Tasks]
+      responses:
+        "200":
+          description: The task.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      summary: Replace a task (FR-013)
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PutTaskRequest" }
+      responses:
+        "200":
+          description: Replaced.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      summary: Partially update a task (FR-014)
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PatchTaskRequest" }
+      responses:
+        "200":
+          description: Patched.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      summary: Delete a task (FR-015)
+      tags: [Tasks]
+      responses:
+        "204": { description: Deleted. }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  parameters:
+    CorrelationId:
+      in: header
+      name: X-Correlation-Id
+      required: false
+      schema: { type: string, maxLength: 64 }
+      description: |
+        Stable correlation id propagated end-to-end. If absent, the server
+        generates a ULID and echoes it back on the response header.
+
+  responses:
+    NotFound:
+      description: No task with the given id.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    ValidationError:
+      description: Request failed validation.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+  schemas:
+    TaskStatus:
+      type: string
+      enum: [todo, in_progress, done]
+    TaskPriority:
+      type: string
+      enum: [low, medium, high]
+
+    Task:
+      type: object
+      additionalProperties: false
+      required: [id, title, status, priority, created_at, updated_at]
+      properties:
+        id:          { type: string, format: uuid }
+        title:       { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, "null"], maxLength: 2000 }
+        status:      { $ref: "#/components/schemas/TaskStatus" }
+        priority:    { $ref: "#/components/schemas/TaskPriority" }
+        due_date:    { type: [string, "null"], format: date }
+        created_at:  { type: string, format: date-time }
+        updated_at:  { type: string, format: date-time }
+
+    CreateTaskRequest:
+      type: object
+      # additionalProperties: true (per FR-023; unknown fields are ignored, not rejected)
+      required: [title]
+      properties:
+        title:       { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 2000 }
+        status:      { $ref: "#/components/schemas/TaskStatus" }
+        priority:    { $ref: "#/components/schemas/TaskPriority" }
+        due_date:    { type: string, format: date }
+
+    PutTaskRequest:
+      type: object
+      required: [title]
+      properties:
+        title:       { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 2000 }
+        status:      { $ref: "#/components/schemas/TaskStatus" }
+        priority:    { $ref: "#/components/schemas/TaskPriority" }
+        due_date:    { type: string, format: date }
+
+    PatchTaskRequest:
+      type: object
+      minProperties: 1
+      properties:
+        title:       { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 2000 }
+        status:      { $ref: "#/components/schemas/TaskStatus" }
+        priority:    { $ref: "#/components/schemas/TaskPriority" }
+        due_date:    { type: [string, "null"], format: date }
+
+    TaskListPage:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Task" }
+        page:      { type: integer, minimum: 1 }
+        page_size: { type: integer, minimum: 1, maximum: 100 }
+        total:     { type: integer, minimum: 0 }
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:    { type: string, examples: [validation_error, not_found, conflict] }
+            message: { type: string }
+            details: { }   # arbitrary structured payload, optional

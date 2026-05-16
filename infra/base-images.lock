@@ -1,0 +1,16 @@
+# Single source of truth for container base images used by every Dockerfile
+# in this repo. Dockerfiles MUST read BASE_IMAGE as a build ARG and MUST NOT
+# hard-code a tag.
+#
+# Constitution Principle IV: base images are pinned by digest (sha256:...).
+# Format: KEY=value, one per line. Lines starting with # are comments.
+#
+# TODO(T009): pin the real digest before any production build.
+# Run on a machine with crane/regctl/skopeo installed:
+#   crane digest mcr.microsoft.com/dotnet/aspnet:10.0-alpine
+# then replace `<digest>` below with the returned `sha256:...` value and
+# commit. CI should refuse builds while the placeholder is still present
+# (gate is added in a later phase alongside the Dockerfiles).
+
+# ASP.NET Core runtime — used by both src/WebApp and src/McpServer images.
+ASPNET_RUNTIME=mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:<digest>

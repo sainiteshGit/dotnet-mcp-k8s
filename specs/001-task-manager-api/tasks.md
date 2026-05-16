@@ -55,14 +55,14 @@
 
 ### Scaffolding
 
-- [ ] T013 [P] `dotnet new webapi -n WebApp -o src/WebApp` (Minimal APIs template), add to solution
-- [ ] T014 [P] `dotnet new console -n McpServer -o src/McpServer` (.NET 10), add to solution
-- [ ] T015 [P] `dotnet new xunit -n WebApp.Tests -o tests/WebApp.Tests`, add to solution; reference `src/WebApp/WebApp.csproj`
-- [ ] T016 [P] `dotnet new xunit -n McpServer.Tests -o tests/McpServer.Tests`, add to solution; reference `src/McpServer/McpServer.csproj`
-- [ ] T017 [P] Add NuGet packages to `src/WebApp/WebApp.csproj`: `Microsoft.EntityFrameworkCore`, `Npgsql.EntityFrameworkCore.PostgreSQL`, `FluentValidation.AspNetCore`, `Serilog.AspNetCore`, `Serilog.Sinks.Console`, `OpenTelemetry.Extensions.Hosting`, `OpenTelemetry.Instrumentation.AspNetCore`, `OpenTelemetry.Instrumentation.Http`, `OpenTelemetry.Instrumentation.EntityFrameworkCore`, `OpenTelemetry.Exporter.OpenTelemetryProtocol`, `Swashbuckle.AspNetCore`, `Azure.Identity`
-- [ ] T018 [P] Add NuGet packages to `src/McpServer/McpServer.csproj`: `ModelContextProtocol` (MCP spec `2025-06-18`), `Microsoft.Extensions.Hosting`, `Microsoft.Extensions.Http`, `Microsoft.Extensions.Http.Resilience`, `Serilog.Extensions.Hosting`, `Serilog.Sinks.Console`, `OpenTelemetry.Extensions.Hosting`, `OpenTelemetry.Instrumentation.Http`, `OpenTelemetry.Exporter.OpenTelemetryProtocol`, `Azure.Identity`
-- [ ] T019 [P] Add test packages to `tests/WebApp.Tests/WebApp.Tests.csproj`: `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql`, `FluentAssertions`, `coverlet.collector`
-- [ ] T020 [P] Add test packages to `tests/McpServer.Tests/McpServer.Tests.csproj`: `WireMock.Net`, `ModelContextProtocol` (in-memory transport), `FluentAssertions`, `coverlet.collector`
+- [X] T013 [P] `dotnet new webapi -n WebApp -o src/WebApp` (Minimal APIs template), add to solution
+- [X] T014 [P] `dotnet new console -n McpServer -o src/McpServer` (.NET 10), add to solution
+- [X] T015 [P] `dotnet new xunit -n WebApp.Tests -o tests/WebApp.Tests`, add to solution; reference `src/WebApp/WebApp.csproj`
+- [X] T016 [P] `dotnet new xunit -n McpServer.Tests -o tests/McpServer.Tests`, add to solution; reference `src/McpServer/McpServer.csproj`
+- [X] T017 [P] Add NuGet packages to `src/WebApp/WebApp.csproj`: `Microsoft.EntityFrameworkCore`, `Npgsql.EntityFrameworkCore.PostgreSQL`, `FluentValidation.AspNetCore`, `Serilog.AspNetCore`, `Serilog.Sinks.Console`, `OpenTelemetry.Extensions.Hosting`, `OpenTelemetry.Instrumentation.AspNetCore`, `OpenTelemetry.Instrumentation.Http`, `OpenTelemetry.Instrumentation.EntityFrameworkCore`, `OpenTelemetry.Exporter.OpenTelemetryProtocol`, `Swashbuckle.AspNetCore`, `Azure.Identity`
+- [X] T018 [P] Add NuGet packages to `src/McpServer/McpServer.csproj`: `ModelContextProtocol` (MCP spec `2025-06-18`), `Microsoft.Extensions.Hosting`, `Microsoft.Extensions.Http`, `Microsoft.Extensions.Http.Resilience`, `Serilog.Extensions.Hosting`, `Serilog.Sinks.Console`, `OpenTelemetry.Extensions.Hosting`, `OpenTelemetry.Instrumentation.Http`, `OpenTelemetry.Exporter.OpenTelemetryProtocol`, `Azure.Identity`
+- [X] T019 [P] Add test packages to `tests/WebApp.Tests/WebApp.Tests.csproj`: `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql`, `FluentAssertions`, `coverlet.collector`
+- [X] T020 [P] Add test packages to `tests/McpServer.Tests/McpServer.Tests.csproj`: `WireMock.Net`, `ModelContextProtocol` (in-memory transport), `FluentAssertions`, `coverlet.collector`
 
 ### Failing tests for shared infrastructure (Principle III)
 

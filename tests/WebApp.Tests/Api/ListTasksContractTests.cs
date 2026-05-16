@@ -9,6 +9,7 @@ using WebApp.Tests.Integration;
 namespace WebApp.Tests.Api;
 
 /// <summary>T043 — GET /api/v1/tasks with filters and pagination.</summary>
+[Trait("Category", "Integration")]
 [Collection("Postgres")]
 public sealed class ListTasksContractTests
 {

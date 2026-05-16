@@ -9,6 +9,7 @@ using WebApp.Tests.Integration;
 namespace WebApp.Tests.Api;
 
 /// <summary>T042 — GET /api/v1/tasks/{id} returns 200 with the task or 404 with ErrorEnvelope.</summary>
+[Trait("Category", "Integration")]
 [Collection("Postgres")]
 public sealed class GetTaskContractTests
 {

@@ -12,6 +12,7 @@ namespace WebApp.Tests.HealthChecks;
 /// integrated outcome: /healthz is always 200; /readyz is 200 when the DB
 /// is reachable.
 /// </summary>
+[Trait("Category", "Integration")]
 [Collection("Postgres")]
 public sealed class HealthEndpointTests
 {

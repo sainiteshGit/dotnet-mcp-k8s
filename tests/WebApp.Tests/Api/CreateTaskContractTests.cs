@@ -14,6 +14,7 @@ namespace WebApp.Tests.Api;
 /// defaults (status=todo, priority=medium) and timestamps, and emits a
 /// Location header pointing at the new resource.
 /// </summary>
+[Trait("Category", "Integration")]
 [Collection("Postgres")]
 public sealed class CreateTaskContractTests
 {

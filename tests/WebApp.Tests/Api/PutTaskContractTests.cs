@@ -8,6 +8,7 @@ using WebApp.Tests.Integration;
 namespace WebApp.Tests.Api;
 
 /// <summary>T044 — PUT /api/v1/tasks/{id} replaces all fields; missing required → 400.</summary>
+[Trait("Category", "Integration")]
 [Collection("Postgres")]
 public sealed class PutTaskContractTests
 {

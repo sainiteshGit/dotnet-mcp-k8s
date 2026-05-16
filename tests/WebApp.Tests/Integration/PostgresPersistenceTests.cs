@@ -13,6 +13,7 @@ namespace WebApp.Tests.Integration;
 /// T048 — Initial migration applies cleanly, CHECK constraints reject
 /// invalid rows at the DB layer, and the two custom indexes exist.
 /// </summary>
+[Trait("Category", "Integration")]
 [Collection("Postgres")]
 public sealed class PostgresPersistenceTests
 {
@@ -31,7 +32,10 @@ public sealed class PostgresPersistenceTests
         """;
         var names = new System.Collections.Generic.List<string>();
         await using var r = await cmd.ExecuteReaderAsync();
-        while (await r.ReadAsync()) names.Add(r.GetString(0));
+        while (await r.ReadAsync())
+        {
+            names.Add(r.GetString(0));
+        }
         names.Should().Contain("ix_tasks_status_priority_due_date");
         names.Should().Contain("ix_tasks_created_at_desc");
     }
@@ -42,7 +46,10 @@ public sealed class PostgresPersistenceTests
         using var scope = _fx.Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
         var conn = db.Database.GetDbConnection();
-        if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+        if (conn.State != System.Data.ConnectionState.Open)
+        {
+            await conn.OpenAsync();
+        }
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = "INSERT INTO tasks (id, title, status, priority, created_at, updated_at) " +
                           "VALUES (gen_random_uuid(), 'x', 'nope', 'low', now(), now())";
@@ -59,7 +66,7 @@ public sealed class PostgresPersistenceTests
         {
             Id = System.Guid.NewGuid(),
             Title = "round-trip",
-            Status = TaskStatus.Todo,
+            Status = WebApp.Domain.TaskStatus.Todo,
             Priority = TaskPriority.Medium,
             CreatedAt = System.DateTime.UtcNow,
             UpdatedAt = System.DateTime.UtcNow,

@@ -129,15 +129,15 @@
 
 ### API endpoint implementation
 
-- [ ] T056 [US1] Implement endpoint group `/api/v1/tasks` in [src/WebApp/Api/TasksEndpoints.cs](../../src/WebApp/Api/TasksEndpoints.cs) wiring POST/GET-list/GET-by-id/PUT/PATCH/DELETE; map validation failures to `validation_error`, NotFound to `not_found` per FR-020/FR-021 — T041–T046 turn GREEN
-- [ ] T057 [US1] Configure JSON options in `src/WebApp/Program.cs` to ignore unknown request fields (FR-023) and emit lower-snake-case enum values matching [data-model.md](./data-model.md)
-- [ ] T058 [US1] Wire Swashbuckle to publish OpenAPI 3.1 at `/openapi/v1.json` matching [contracts/webapp-openapi.yaml](./contracts/webapp-openapi.yaml); add contract-drift test in [tests/WebApp.Tests/Api/OpenApiDriftTest.cs](../../tests/WebApp.Tests/Api/OpenApiDriftTest.cs) that diffs the published spec against the checked-in YAML
-- [ ] T059 [US1] Wire Entra ID token-based Postgres authentication via `DefaultAzureCredential` in `src/WebApp/Program.cs` (no static password — Workload Identity)
+- [X] T056 [US1] Implement endpoint group `/api/v1/tasks` in [src/WebApp/Api/TasksEndpoints.cs](../../src/WebApp/Api/TasksEndpoints.cs) wiring POST/GET-list/GET-by-id/PUT/PATCH/DELETE; map validation failures to `validation_error`, NotFound to `not_found` per FR-020/FR-021 — T041–T046 turn GREEN
+- [X] T057 [US1] Configure JSON options in `src/WebApp/Program.cs` to ignore unknown request fields (FR-023) and emit lower-snake-case enum values matching [data-model.md](./data-model.md)
+- [X] T058 [US1] Wire Swashbuckle to publish OpenAPI 3.1 at `/openapi/v1.json` matching [contracts/webapp-openapi.yaml](./contracts/webapp-openapi.yaml); add contract-drift test in [tests/WebApp.Tests/Api/OpenApiDriftTest.cs](../../tests/WebApp.Tests/Api/OpenApiDriftTest.cs) that diffs the published spec against the checked-in YAML
+- [X] T059 [US1] Wire Entra ID token-based Postgres authentication via `DefaultAzureCredential` in `src/WebApp/Program.cs` (no static password — Workload Identity)
 
 ### Health checks (US1 portion)
 
-- [ ] T060 [P] [US1] Implement `/healthz` (liveness, always 200) in [src/WebApp/HealthChecks/HealthEndpoints.cs](../../src/WebApp/HealthChecks/HealthEndpoints.cs) — T049 partly GREEN
-- [ ] T061 [US1] Implement `/readyz` (readiness — checks DB reachability via a cheap `SELECT 1`) in `src/WebApp/HealthChecks/HealthEndpoints.cs` — T049 fully GREEN
+- [X] T060 [P] [US1] Implement `/healthz` (liveness, always 200) in [src/WebApp/HealthChecks/HealthEndpoints.cs](../../src/WebApp/HealthChecks/HealthEndpoints.cs) — T049 partly GREEN
+- [X] T061 [US1] Implement `/readyz` (readiness — checks DB reachability via a cheap `SELECT 1`) in `src/WebApp/HealthChecks/HealthEndpoints.cs` — T049 fully GREEN
 
 ### Container
 

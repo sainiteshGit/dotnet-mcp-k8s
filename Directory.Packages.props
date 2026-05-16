@@ -40,8 +40,10 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.15.1-beta.1" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
 
-    <!-- Swagger / OpenAPI -->
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
+    <!-- OpenAPI UI (T058 deviation: Swashbuckle 7.x is incompatible with .NET 10;
+         AspNetCore.OpenApi above publishes the spec, Scalar.AspNetCore renders
+         the UI in Development only.) -->
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.10.0" />
 
     <!-- Azure -->
     <PackageVersion Include="Azure.Identity" Version="1.16.0" />

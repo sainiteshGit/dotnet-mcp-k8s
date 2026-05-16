@@ -13,6 +13,7 @@ public static class ErrorCode
     public const string Conflict = "conflict";
     public const string UpstreamUnavailable = "upstream_unavailable";
     public const string MutationsDisabled = "mutations_disabled";
+    public const string NotReady = "not_ready";
 }
 
 /// <summary>

@@ -73,3 +73,17 @@ indent_size = 2
 # ---------- Bicep ----------
 [*.bicep]
 indent_size = 2
+
+# ---------- EF Core auto-generated migrations ----------
+# These files are scaffolded by `dotnet ef migrations add` and follow EF's
+# own conventions; exclude from project style/quality rules so the build
+# stays green after `dotnet ef` regenerates them.
+[**/Migrations/**.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.category-Style.severity = none
+dotnet_analyzer_diagnostic.category-CodeQuality.severity = none
+csharp_style_namespace_declarations = block_scoped:silent
+dotnet_diagnostic.IDE0161.severity = none
+dotnet_diagnostic.CA1825.severity = none
+dotnet_diagnostic.CA1861.severity = none
+dotnet_diagnostic.IDE0011.severity = none

@@ -56,10 +56,22 @@ public sealed class TaskRepository : ITaskRepository
         CancellationToken ct)
     {
         var query = _db.Tasks.AsNoTracking().AsQueryable();
-        if (status is not null) query = query.Where(t => t.Status == status.Value);
-        if (priority is not null) query = query.Where(t => t.Priority == priority.Value);
-        if (dueBefore is not null) query = query.Where(t => t.DueDate != null && t.DueDate <= dueBefore.Value);
-        if (dueAfter is not null) query = query.Where(t => t.DueDate != null && t.DueDate >= dueAfter.Value);
+        if (status is not null)
+        {
+            query = query.Where(t => t.Status == status.Value);
+        }
+        if (priority is not null)
+        {
+            query = query.Where(t => t.Priority == priority.Value);
+        }
+        if (dueBefore is not null)
+        {
+            query = query.Where(t => t.DueDate != null && t.DueDate <= dueBefore.Value);
+        }
+        if (dueAfter is not null)
+        {
+            query = query.Where(t => t.DueDate != null && t.DueDate >= dueAfter.Value);
+        }
 
         var total = await query.LongCountAsync(ct).ConfigureAwait(false);
         var items = await query
@@ -74,7 +86,10 @@ public sealed class TaskRepository : ITaskRepository
 
     public async Task<TaskItem> CreateAsync(TaskItem item, CancellationToken ct)
     {
-        if (item.Id == Guid.Empty) item.Id = Guid.NewGuid();
+        if (item.Id == Guid.Empty)
+        {
+            item.Id = Guid.NewGuid();
+        }
         var now = _time.GetUtcNow().UtcDateTime;
         item.CreatedAt = now;
         item.UpdatedAt = now;
@@ -86,7 +101,10 @@ public sealed class TaskRepository : ITaskRepository
     public async Task<TaskItem?> ReplaceAsync(Guid id, Action<TaskItem> apply, CancellationToken ct)
     {
         var existing = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct).ConfigureAwait(false);
-        if (existing is null) return null;
+        if (existing is null)
+        {
+            return null;
+        }
         apply(existing);
         existing.UpdatedAt = _time.GetUtcNow().UtcDateTime;
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -96,7 +114,10 @@ public sealed class TaskRepository : ITaskRepository
     public async Task<TaskItem?> PatchAsync(Guid id, Action<TaskItem> apply, CancellationToken ct)
     {
         var existing = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct).ConfigureAwait(false);
-        if (existing is null) return null;
+        if (existing is null)
+        {
+            return null;
+        }
         apply(existing);
         existing.UpdatedAt = _time.GetUtcNow().UtcDateTime;
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -106,7 +127,10 @@ public sealed class TaskRepository : ITaskRepository
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
         var existing = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct).ConfigureAwait(false);
-        if (existing is null) return false;
+        if (existing is null)
+        {
+            return false;
+        }
         _db.Tasks.Remove(existing);
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);
         return true;

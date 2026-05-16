@@ -20,37 +20,22 @@ public sealed class TaskDbContext : DbContext
     {
         modelBuilder.HasPostgresExtension("pgcrypto");
 
+        // Expression trees cannot contain switch expressions, so use ternary chains.
         var statusConverter = new ValueConverter<Domain.TaskStatus, string>(
-            v => v switch
-            {
-                Domain.TaskStatus.Todo => "todo",
-                Domain.TaskStatus.InProgress => "in_progress",
-                Domain.TaskStatus.Done => "done",
-                _ => "todo",
-            },
-            v => v switch
-            {
-                "todo" => Domain.TaskStatus.Todo,
-                "in_progress" => Domain.TaskStatus.InProgress,
-                "done" => Domain.TaskStatus.Done,
-                _ => Domain.TaskStatus.Todo,
-            });
+            v => v == Domain.TaskStatus.Done ? "done"
+                : v == Domain.TaskStatus.InProgress ? "in_progress"
+                : "todo",
+            v => v == "done" ? Domain.TaskStatus.Done
+                : v == "in_progress" ? Domain.TaskStatus.InProgress
+                : Domain.TaskStatus.Todo);
 
         var priorityConverter = new ValueConverter<Domain.TaskPriority, string>(
-            v => v switch
-            {
-                Domain.TaskPriority.Low => "low",
-                Domain.TaskPriority.Medium => "medium",
-                Domain.TaskPriority.High => "high",
-                _ => "medium",
-            },
-            v => v switch
-            {
-                "low" => Domain.TaskPriority.Low,
-                "medium" => Domain.TaskPriority.Medium,
-                "high" => Domain.TaskPriority.High,
-                _ => Domain.TaskPriority.Medium,
-            });
+            v => v == Domain.TaskPriority.High ? "high"
+                : v == Domain.TaskPriority.Low ? "low"
+                : "medium",
+            v => v == "high" ? Domain.TaskPriority.High
+                : v == "low" ? Domain.TaskPriority.Low
+                : Domain.TaskPriority.Medium);
 
         modelBuilder.Entity<TaskItem>(b =>
         {

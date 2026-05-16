@@ -15,5 +15,7 @@ builder.Services.AddSerilog((services, lc) => lc
     .Enrich.With<RedactionEnricher>()
     .WriteTo.Console(new Serilog.Formatting.Compact.CompactJsonFormatter()));
 
+builder.Services.AddTaskManagerTelemetry(builder.Configuration);
+
 var host = builder.Build();
 await host.RunAsync();

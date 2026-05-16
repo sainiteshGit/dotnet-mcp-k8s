@@ -15,6 +15,8 @@ builder.Host.UseSerilog((ctx, services, lc) => lc
     .Enrich.With<RedactionEnricher>()
     .WriteTo.Console(new Serilog.Formatting.Compact.CompactJsonFormatter()));
 
+builder.Services.AddTaskManagerTelemetry(builder.Configuration);
+
 var app = builder.Build();
 
 app.UseCorrelationId();

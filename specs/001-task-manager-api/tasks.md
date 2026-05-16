@@ -66,19 +66,19 @@
 
 ### Failing tests for shared infrastructure (Principle III)
 
-- [ ] T021 [P] Write failing unit tests in [tests/WebApp.Tests/Logging/RedactionTests.cs](../../tests/WebApp.Tests/Logging/RedactionTests.cs) asserting redaction for EVERY pattern in [research.md](./research.md) §7: keys matching `*_TOKEN`, `*_KEY`, `*_PASSWORD`, `*_SECRET`, `AZURE_*`; `Authorization: Bearer …`; JWT-shaped values; Postgres connection strings; K8s `Secret.data`
-- [ ] T022 [P] Write failing unit tests in [tests/McpServer.Tests/Logging/RedactionTests.cs](../../tests/McpServer.Tests/Logging/RedactionTests.cs) with the same coverage as T021 (shared redaction policy)
-- [ ] T023 [P] Write failing unit tests in [tests/WebApp.Tests/Api/ErrorEnvelopeTests.cs](../../tests/WebApp.Tests/Api/ErrorEnvelopeTests.cs) asserting the `{"error": {"code","message","details?"}}` shape and that `code` values are stable strings (FR-020, FR-021)
-- [ ] T024 [P] Write failing unit tests in [tests/WebApp.Tests/Observability/CorrelationIdTests.cs](../../tests/WebApp.Tests/Observability/CorrelationIdTests.cs) asserting that an inbound `X-Correlation-Id` is honored, a missing one is generated as a ULID, and the value is echoed on the response (FR-041, FR-042)
+- [X] T021 [P] Write failing unit tests in [tests/WebApp.Tests/Logging/RedactionTests.cs](../../tests/WebApp.Tests/Logging/RedactionTests.cs) asserting redaction for EVERY pattern in [research.md](./research.md) §7: keys matching `*_TOKEN`, `*_KEY`, `*_PASSWORD`, `*_SECRET`, `AZURE_*`; `Authorization: Bearer …`; JWT-shaped values; Postgres connection strings; K8s `Secret.data`
+- [X] T022 [P] Write failing unit tests in [tests/McpServer.Tests/Logging/RedactionTests.cs](../../tests/McpServer.Tests/Logging/RedactionTests.cs) with the same coverage as T021 (shared redaction policy)
+- [X] T023 [P] Write failing unit tests in [tests/WebApp.Tests/Api/ErrorEnvelopeTests.cs](../../tests/WebApp.Tests/Api/ErrorEnvelopeTests.cs) asserting the `{"error": {"code","message","details?"}}` shape and that `code` values are stable strings (FR-020, FR-021)
+- [X] T024 [P] Write failing unit tests in [tests/WebApp.Tests/Observability/CorrelationIdTests.cs](../../tests/WebApp.Tests/Observability/CorrelationIdTests.cs) asserting that an inbound `X-Correlation-Id` is honored, a missing one is generated as a ULID, and the value is echoed on the response (FR-041, FR-042)
 
 ### Shared implementation (after T021–T024 are RED)
 
-- [ ] T025 [P] Implement Serilog redaction enricher in [src/WebApp/Observability/RedactionEnricher.cs](../../src/WebApp/Observability/RedactionEnricher.cs) per [research.md](./research.md) §7; wire into Serilog config in `src/WebApp/Program.cs` — T021 turns GREEN
-- [ ] T026 [P] Implement the same redaction enricher in [src/McpServer/Observability/RedactionEnricher.cs](../../src/McpServer/Observability/RedactionEnricher.cs) (identical policy); wire into Serilog config in `src/McpServer/Program.cs` — T022 turns GREEN
-- [ ] T027 [P] Implement `ErrorEnvelope` and `ErrorCode` constants in [src/WebApp/Api/ErrorEnvelope.cs](../../src/WebApp/Api/ErrorEnvelope.cs) — T023 turns GREEN
-- [ ] T028 Implement correlation-id middleware in [src/WebApp/Observability/CorrelationIdMiddleware.cs](../../src/WebApp/Observability/CorrelationIdMiddleware.cs) (read `X-Correlation-Id`, generate ULID if absent, push to Serilog `LogContext` + OTel span attribute `correlation.id`, echo on response) — T024 turns GREEN
-- [ ] T029 [P] Implement OTel base wiring in [src/WebApp/Observability/Telemetry.cs](../../src/WebApp/Observability/Telemetry.cs) (ASP.NET Core + HttpClient + EF Core + OTLP exporters)
-- [ ] T030 [P] Implement OTel base wiring in [src/McpServer/Observability/Telemetry.cs](../../src/McpServer/Observability/Telemetry.cs) (HttpClient + OTLP exporters)
+- [X] T025 [P] Implement Serilog redaction enricher in [src/WebApp/Observability/RedactionEnricher.cs](../../src/WebApp/Observability/RedactionEnricher.cs) per [research.md](./research.md) §7; wire into Serilog config in `src/WebApp/Program.cs` — T021 turns GREEN
+- [X] T026 [P] Implement the same redaction enricher in [src/McpServer/Observability/RedactionEnricher.cs](../../src/McpServer/Observability/RedactionEnricher.cs) (identical policy); wire into Serilog config in `src/McpServer/Program.cs` — T022 turns GREEN
+- [X] T027 [P] Implement `ErrorEnvelope` and `ErrorCode` constants in [src/WebApp/Api/ErrorEnvelope.cs](../../src/WebApp/Api/ErrorEnvelope.cs) — T023 turns GREEN
+- [X] T028 Implement correlation-id middleware in [src/WebApp/Observability/CorrelationIdMiddleware.cs](../../src/WebApp/Observability/CorrelationIdMiddleware.cs) (read `X-Correlation-Id`, generate ULID if absent, push to Serilog `LogContext` + OTel span attribute `correlation.id`, echo on response) — T024 turns GREEN
+- [X] T029 [P] Implement OTel base wiring in [src/WebApp/Observability/Telemetry.cs](../../src/WebApp/Observability/Telemetry.cs) (ASP.NET Core + HttpClient + EF Core + OTLP exporters)
+- [X] T030 [P] Implement OTel base wiring in [src/McpServer/Observability/Telemetry.cs](../../src/McpServer/Observability/Telemetry.cs) (HttpClient + OTLP exporters)
 
 ### Shared Azure infra (Bicep modules used by both services)
 

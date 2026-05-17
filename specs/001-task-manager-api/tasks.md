@@ -193,7 +193,7 @@
 
 ### Mutation gate + tool registrations
 
-- [ ] T086 [US2] Implement `MutationGate` reading `MCP_ALLOW_MUTATIONS` (case-insensitive `true`) in [src/McpServer/Mutation/MutationGate.cs](../../src/McpServer/Mutation/MutationGate.cs); implement `MutationsDisabledResult` matching the [contracts/mcp-tools.md](./contracts/mcp-tools.md#structured-mutations_disabled-response) envelope — T074 turns GREEN
+- [X] T086 [US2] Implement `MutationGate` reading `MCP_ALLOW_MUTATIONS` (case-insensitive `true`) in [src/McpServer/Mutation/MutationGate.cs](../../src/McpServer/Mutation/MutationGate.cs); implement `MutationsDisabledResult` matching the [contracts/mcp-tools.md](./contracts/mcp-tools.md#structured-mutations_disabled-response) envelope — T074 turns GREEN
 - [X] T087 [US2] Implement `ErrorTranslator` in [src/McpServer/Tools/ErrorTranslator.cs](../../src/McpServer/Tools/ErrorTranslator.cs) mapping backing `ErrorEnvelope` → MCP `isError:true` envelope (FR-043) and circuit/timeout failures → `upstream_unavailable` (FR-044)
 - [X] T088 [P] [US2] Implement `CreateTaskTool` in [src/McpServer/Tools/CreateTaskTool.cs](../../src/McpServer/Tools/CreateTaskTool.cs) — gated by `MutationGate` — T075 turns GREEN
 - [X] T089 [P] [US2] Implement `ListTasksTool` in [src/McpServer/Tools/ListTasksTool.cs](../../src/McpServer/Tools/ListTasksTool.cs) — T076 turns GREEN
@@ -209,18 +209,18 @@
 
 ### Container
 
-- [ ] T096 [US2] Create [Dockerfile.mcpserver](../../Dockerfile.mcpserver) — multi-stage, same pinned base image, uid `10001`, no shell in final layer
+- [X] T096 [US2] Create [Dockerfile.mcpserver](../../Dockerfile.mcpserver) — multi-stage, same pinned base image, uid `10001`, no shell in final layer
 
 ### Kustomize (mcp manifests)
 
-- [ ] T097 [P] [US2] Create [deploy/base/mcp-server-deployment.yaml](../../deploy/base/mcp-server-deployment.yaml) with the same hardened `securityContext` as the webapp, `azure.workload.identity/use: "true"`, env `BACKING_API_BASE_URL=http://webapp.taskmgr.svc.cluster.local`, liveness/readiness probes, 1–2 replicas, pod label `app: mcp-server`; **does NOT** set `MCP_ALLOW_MUTATIONS` in base
-- [ ] T098 [P] [US2] Create [deploy/base/mcp-server-service.yaml](../../deploy/base/mcp-server-service.yaml) — `ClusterIP`, selector `app: mcp-server`
-- [ ] T099 [US2] Update [deploy/base/kustomization.yaml](../../deploy/base/kustomization.yaml) to include the two MCP manifests
-- [ ] T100 [US2] Create [deploy/overlays/dev/mcp-allow-mutations-patch.yaml](../../deploy/overlays/dev/mcp-allow-mutations-patch.yaml) setting `MCP_ALLOW_MUTATIONS=true` on the MCP Deployment; wire into `deploy/overlays/dev/kustomization.yaml` (Principle II dev exception)
+- [X] T097 [P] [US2] Create [deploy/base/mcp-server-deployment.yaml](../../deploy/base/mcp-server-deployment.yaml) with the same hardened `securityContext` as the webapp, `azure.workload.identity/use: "true"`, env `BACKING_API_BASE_URL=http://webapp.taskmgr.svc.cluster.local`, liveness/readiness probes, 1–2 replicas, pod label `app: mcp-server`; **does NOT** set `MCP_ALLOW_MUTATIONS` in base
+- [X] T098 [P] [US2] Create [deploy/base/mcp-server-service.yaml](../../deploy/base/mcp-server-service.yaml) — `ClusterIP`, selector `app: mcp-server`
+- [X] T099 [US2] Update [deploy/base/kustomization.yaml](../../deploy/base/kustomization.yaml) to include the two MCP manifests
+- [X] T100 [US2] Create [deploy/overlays/dev/mcp-allow-mutations-patch.yaml](../../deploy/overlays/dev/mcp-allow-mutations-patch.yaml) setting `MCP_ALLOW_MUTATIONS=true` on the MCP Deployment; wire into `deploy/overlays/dev/kustomization.yaml` (Principle II dev exception)
 
 ### CI wiring for US2
 
-- [ ] T101 [US2] Extend ci.yml `unit-tests` to also run `dotnet test tests/McpServer.Tests` with coverage; aggregate coverage gate ≥ 80 %
+- [X] T101 [US2] Extend ci.yml `unit-tests` to also run `dotnet test tests/McpServer.Tests` with coverage; aggregate coverage gate ≥ 80 %
 - [ ] T102 [US2] Extend ci.yml `push` job to build `Dockerfile.mcpserver`, tag with git SHA, push to ACR
 
 **Checkpoint**: User Stories 1 AND 2 are independently functional. AI agent (or MCP inspector) can drive end-to-end task lifecycle through the MCP server in the dev overlay; correlation ids reconcile in webapp logs (SC-006).

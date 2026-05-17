@@ -8,5 +8,12 @@ resources:
   - ../../base
 
 # Story phases will append patches for env-specific config (image tags,
-# replicas, resource limits, NetworkPolicy overrides). Left empty for now.
-patches: []
+# replicas, resource limits, NetworkPolicy overrides).
+patches:
+  # T100 — dev-only: enable MCP write tools (Principle II dev exception).
+  - path: mcp-allow-mutations-patch.yaml
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: mcp-server

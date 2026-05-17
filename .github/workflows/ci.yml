@@ -132,6 +132,8 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       # Bash history expansion would mangle the `!=` filter, so we set +H first.
+      # T101 — TaskManager.sln includes tests/McpServer.Tests, so McpServer unit
+      # tests run here automatically and contribute to the aggregate ≥80 % gate.
       - name: Run unit tests (Category != Integration) with coverage
         shell: bash
         run: |

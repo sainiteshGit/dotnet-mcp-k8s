@@ -1,0 +1,102 @@
+# T097 — MCP Server Deployment.
+#
+# Same hardened pod template as the webapp (T063):
+#   - non-root uid 10001, readOnlyRootFilesystem, drop ALL caps, seccompProfile
+#   - emptyDir at /tmp is the only writable mount
+#   - Workload Identity label projects the federated token bound to taskmgr-sa
+#
+# Constitution Principle II: MCP_ALLOW_MUTATIONS is intentionally absent here.
+# Read-only is the default. The dev overlay (T100) patches this Deployment to
+# add MCP_ALLOW_MUTATIONS=true. Prod overlays MUST NOT.
+#
+# Image reference uses placeholders substituted at deploy time (T070/T116):
+#   __ACR_LOGIN_SERVER__   <- acr.outputs.loginServer (main.bicep)
+#   __IMAGE_TAG__          <- short git SHA
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-server
+  namespace: taskmgr
+  labels:
+    app.kubernetes.io/name: mcp-server
+    app.kubernetes.io/part-of: taskmgr
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-server
+        app.kubernetes.io/part-of: taskmgr
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: taskmgr-sa
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mcp-server
+          image: __ACR_LOGIN_SERVER__/taskmgr-mcpserver:__IMAGE_TAG__
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: ASPNETCORE_URLS
+              value: http://+:8080
+            # In-cluster DNS for the webapp ClusterIP Service (deploy/base/webapp-service.yaml).
+            - name: BACKING_API_BASE_URL
+              value: http://webapp.taskmgr.svc.cluster.local
+            # NOTE: MCP_ALLOW_MUTATIONS is deliberately NOT set in base.
+            # Read-only by default (Constitution Principle II).
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

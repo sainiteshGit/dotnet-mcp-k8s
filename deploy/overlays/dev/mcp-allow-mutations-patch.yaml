@@ -1,0 +1,19 @@
+# T100 — Dev-only overlay: enable MCP write tools.
+#
+# Constitution Principle II ("Read-Only by Default") allows mutations only on
+# explicit, non-production opt-in. This patch sets MCP_ALLOW_MUTATIONS=true on
+# the MCP Deployment in the dev environment. Production overlays MUST NOT
+# include this patch.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-server
+  namespace: taskmgr
+spec:
+  template:
+    spec:
+      containers:
+        - name: mcp-server
+          env:
+            - name: MCP_ALLOW_MUTATIONS
+              value: "true"

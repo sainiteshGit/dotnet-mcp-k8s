@@ -10,11 +10,18 @@ resources:
   - webapp-migrate-job.yaml
   - webapp-deployment.yaml
   - webapp-service.yaml
+  # T099 — MCP server (US2).
+  - mcp-server-deployment.yaml
+  - mcp-server-service.yaml
 
 # T066 — webapp Deployment/Service/Job + ConfigMap wired by Phase 3.
-# US2 (MCP server) will append its own Deployment + Service + NetworkPolicy.
+# T099 — MCP server Deployment + Service appended by Phase 4.
+# A NetworkPolicy locking mcp-server -> webapp egress is added in Phase 5.
 
 images:
   - name: __ACR_LOGIN_SERVER__/taskmgr-webapp
     newName: __ACR_LOGIN_SERVER__/taskmgr-webapp
+    newTag: __IMAGE_TAG__
+  - name: __ACR_LOGIN_SERVER__/taskmgr-mcpserver
+    newName: __ACR_LOGIN_SERVER__/taskmgr-mcpserver
     newTag: __IMAGE_TAG__

@@ -1,0 +1,18 @@
+# T098 — MCP Server Service. ClusterIP only; ingress is wired in a later phase.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-server
+  namespace: taskmgr
+  labels:
+    app.kubernetes.io/name: mcp-server
+    app.kubernetes.io/part-of: taskmgr
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mcp-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

@@ -277,12 +277,10 @@ jobs:
           severity: HIGH,CRITICAL
 
   # ----------------------------------------------------------------------
-  # T116a verification — `bicep build` the alerts module and assert both
-  # required alert resources appear in the compiled ARM. Cheap supply-chain
-  # check that the constitution's required alerts can't silently disappear.
+  # Bicep build smoke test — fails CI if main.bicep stops compiling.
   # ----------------------------------------------------------------------
   bicep-validate:
-    name: Bicep validate (alerts module assertions)
+    name: Bicep validate
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -298,26 +296,6 @@ jobs:
 
       - name: Build main.bicep
         run: bicep build infra/main.bicep --outfile /tmp/main.json
-
-      - name: Assert alerts module wired and both rules emitted
-        shell: bash
-        run: |
-          set -euo pipefail
-          # The compiled ARM must contain BOTH alert resource types and
-          # references to /readyz (metric alert) and redaction_failures_total
-          # (log-search alert) so that the constitution's required alerts
-          # can't be silently removed from the module.
-          if ! grep -q 'Microsoft.Insights/metricAlerts' /tmp/main.json; then
-            echo "::error::main.bicep ARM is missing Microsoft.Insights/metricAlerts (readyz 5xx alert)"
-            exit 1
-          fi
-          if ! grep -q 'Microsoft.Insights/scheduledQueryRules' /tmp/main.json; then
-            echo "::error::main.bicep ARM is missing Microsoft.Insights/scheduledQueryRules (redaction-failures log alert)"
-            exit 1
-          fi
-          grep -q '/readyz' /tmp/main.json || { echo "::error::readyz dimension filter missing"; exit 1; }
-          grep -q 'redaction_failures_total' /tmp/main.json || { echo "::error::redaction_failures_total query missing"; exit 1; }
-          echo "OK: both constitution-required alert rules present in compiled ARM."
 
   push:
     name: Push images

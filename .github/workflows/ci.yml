@@ -203,13 +203,121 @@ jobs:
           name: integration-test-results
           path: TestResults/*.trx
 
+  # ----------------------------------------------------------------------
+  # T114 — Prod-overlay lint: ensure MCP_ALLOW_MUTATIONS is NEVER true in
+  # deploy/overlays/prod. Gates the deploy job (Principle II).
+  # ----------------------------------------------------------------------
+  lint-prod-overlay:
+    name: Lint prod overlay (no MCP mutations)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run prod-overlay linter
+        shell: bash
+        run: |
+          chmod +x scripts/lint-prod-overlay.sh
+          scripts/lint-prod-overlay.sh deploy/overlays/prod
+
+  # ----------------------------------------------------------------------
+  # T115 — Trivy CVE gate. Builds BOTH images locally (no push) and scans
+  # them; fails on any HIGH or CRITICAL. Must succeed before `push`.
+  # ----------------------------------------------------------------------
   trivy-scan:
     name: Trivy CVE scan
     needs: [unit-tests, integration-tests]
     runs-on: ubuntu-latest
     steps:
-      - name: TODO(Phase 5 T115) — Trivy HIGH/CRITICAL gate on both images
-        run: echo "trivy-scan job skeleton — wired by T115"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build webapp image (load to local docker)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.webapp
+          push: false
+          load: true
+          provenance: false
+          tags: trivy-scan/taskmgr-webapp:${{ github.sha }}
+
+      - name: Build mcpserver image (load to local docker)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.mcpserver
+          push: false
+          load: true
+          provenance: false
+          tags: trivy-scan/taskmgr-mcpserver:${{ github.sha }}
+
+      - name: Trivy scan — webapp (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: trivy-scan/taskmgr-webapp:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+
+      - name: Trivy scan — mcpserver (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: trivy-scan/taskmgr-mcpserver:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+
+  # ----------------------------------------------------------------------
+  # T116a verification — `bicep build` the alerts module and assert both
+  # required alert resources appear in the compiled ARM. Cheap supply-chain
+  # check that the constitution's required alerts can't silently disappear.
+  # ----------------------------------------------------------------------
+  bicep-validate:
+    name: Bicep validate (alerts module assertions)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bicep CLI
+        run: |
+          curl -sLo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
+          chmod +x bicep
+          sudo mv bicep /usr/local/bin/bicep
+          bicep --version
+
+      - name: Build main.bicep
+        run: bicep build infra/main.bicep --outfile /tmp/main.json
+
+      - name: Assert alerts module wired and both rules emitted
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The compiled ARM must contain BOTH alert resource types and
+          # references to /readyz (metric alert) and redaction_failures_total
+          # (log-search alert) so that the constitution's required alerts
+          # can't be silently removed from the module.
+          if ! grep -q 'Microsoft.Insights/metricAlerts' /tmp/main.json; then
+            echo "::error::main.bicep ARM is missing Microsoft.Insights/metricAlerts (readyz 5xx alert)"
+            exit 1
+          fi
+          if ! grep -q 'Microsoft.Insights/scheduledQueryRules' /tmp/main.json; then
+            echo "::error::main.bicep ARM is missing Microsoft.Insights/scheduledQueryRules (redaction-failures log alert)"
+            exit 1
+          fi
+          grep -q '/readyz' /tmp/main.json || { echo "::error::readyz dimension filter missing"; exit 1; }
+          grep -q 'redaction_failures_total' /tmp/main.json || { echo "::error::redaction_failures_total query missing"; exit 1; }
+          echo "OK: both constitution-required alert rules present in compiled ARM."
 
   push:
     name: Push images
@@ -219,7 +327,8 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       ACR_NAME: acrtaskmgrdev
-      IMAGE_REPO: taskmgr-webapp
+      WEBAPP_REPO: taskmgr-webapp
+      MCP_REPO: taskmgr-mcpserver
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -245,8 +354,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # T070 — build the webapp image from Dockerfile.webapp (T062) and push
-      # to ACR. The MCP image (T102) will reuse this job pattern.
+      # T070 — webapp image
       - name: Build and push webapp image
         uses: docker/build-push-action@v6
         with:
@@ -255,13 +363,102 @@ jobs:
           push: true
           provenance: false
           tags: |
-            ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_REPO }}:${{ github.sha }}
-            ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_REPO }}:latest
+            ${{ steps.acr.outputs.login_server }}/${{ env.WEBAPP_REPO }}:${{ github.sha }}
+            ${{ steps.acr.outputs.login_server }}/${{ env.WEBAPP_REPO }}:latest
 
+      # T102 — mcpserver image
+      - name: Build and push mcpserver image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.mcpserver
+          push: true
+          provenance: false
+          tags: |
+            ${{ steps.acr.outputs.login_server }}/${{ env.MCP_REPO }}:${{ github.sha }}
+            ${{ steps.acr.outputs.login_server }}/${{ env.MCP_REPO }}:latest
+
+  # ----------------------------------------------------------------------
+  # T116 — Deploy. OIDC to UAMI (no client secret), render the dev overlay
+  # with the freshly-pushed SHA tag, kubectl apply, wait for the migrate
+  # Job to complete BEFORE the webapp Deployment rollout finishes.
+  # ----------------------------------------------------------------------
   deploy:
-    name: Deploy
-    needs: push
+    name: Deploy (dev)
+    needs: [push, lint-prod-overlay, bicep-validate]
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      ACR_NAME: acrtaskmgrdev
+      OVERLAY: deploy/overlays/dev
+      NAMESPACE: taskmgr
     steps:
-      - name: TODO(Phase 5 T116) — kubectl apply -k deploy/overlays/<env> after migrate Job
-        run: echo "deploy job skeleton — wired by T116"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC, federated to UAMI)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve AKS cluster + ACR login server
+        id: ctx
+        shell: bash
+        run: |
+          set -euo pipefail
+          login_server=$(az acr show -n "${ACR_NAME}" --query loginServer -o tsv)
+          aks_name=$(az aks list -g "${AZURE_RESOURCE_GROUP}" --query "[0].name" -o tsv)
+          if [[ -z "${aks_name}" ]]; then
+            echo "::error::No AKS cluster found in ${AZURE_RESOURCE_GROUP}"
+            exit 1
+          fi
+          echo "login_server=${login_server}" >> "$GITHUB_OUTPUT"
+          echo "aks_name=${aks_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group "${AZURE_RESOURCE_GROUP}" \
+            --name "${{ steps.ctx.outputs.aks_name }}" \
+            --overwrite-existing
+          kubectl config current-context
+
+      - name: Render overlay (substitute ACR + image tag)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The base kustomization carries __ACR_LOGIN_SERVER__/__IMAGE_TAG__
+          # placeholders so the same manifests work in any env. Substitute
+          # in-place before kubectl apply.
+          find deploy -type f -name '*.yaml' -print0 | xargs -0 sed -i \
+            -e "s|__ACR_LOGIN_SERVER__|${{ steps.ctx.outputs.login_server }}|g" \
+            -e "s|__IMAGE_TAG__|${GITHUB_SHA}|g"
+          echo "--- rendered base kustomization images ---"
+          kubectl kustomize "${OVERLAY}" | grep -E '^\s*image:' | sort -u
+
+      - name: Apply manifests
+        run: kubectl apply -k "${OVERLAY}"
+
+      - name: Wait for migrate Job to complete (before webapp rolls out)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The migrate Job carries argocd sync-wave -10 (PreSync) but plain
+          # kubectl apply doesn't honor waves — so we explicitly block.
+          kubectl -n "${NAMESPACE}" wait \
+            --for=condition=complete \
+            --timeout=300s \
+            job/webapp-migrate
+
+      - name: Wait for webapp + mcp-server rollouts
+        shell: bash
+        run: |
+          set -euo pipefail
+          kubectl -n "${NAMESPACE}" rollout status deployment/webapp    --timeout=300s
+          kubectl -n "${NAMESPACE}" rollout status deployment/mcp-server --timeout=300s
+
+      - name: Show deployed objects
+        if: always()
+        run: kubectl -n "${NAMESPACE}" get pods,svc,deploy,job -o wide

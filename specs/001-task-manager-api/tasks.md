@@ -221,7 +221,7 @@
 ### CI wiring for US2
 
 - [X] T101 [US2] Extend ci.yml `unit-tests` to also run `dotnet test tests/McpServer.Tests` with coverage; aggregate coverage gate ≥ 80 %
-- [ ] T102 [US2] Extend ci.yml `push` job to build `Dockerfile.mcpserver`, tag with git SHA, push to ACR
+- [X] T102 [US2] Extend ci.yml `push` job to build `Dockerfile.mcpserver`, tag with git SHA, push to ACR
 
 **Checkpoint**: User Stories 1 AND 2 are independently functional. AI agent (or MCP inspector) can drive end-to-end task lifecycle through the MCP server in the dev overlay; correlation ids reconcile in webapp logs (SC-006).
 
@@ -252,10 +252,10 @@
 
 ### CI wiring for User Story 3
 
-- [ ] T114 [US3] In [.github/workflows/ci.yml](../../.github/workflows/ci.yml), add a `lint-prod-overlay` job that runs `scripts/lint-prod-overlay.sh deploy/overlays/prod`; this job must succeed before `deploy` runs
-- [ ] T115 [US3] In ci.yml, wire `trivy-scan` job to run `aquasec/trivy-action` against both `Dockerfile.webapp` and `Dockerfile.mcpserver` built images; **fail the build on any HIGH or CRITICAL CVE**; this job must succeed before `push`
-- [ ] T116 [US3] In ci.yml `deploy` job, use GitHub OIDC `azure/login@v2` (no client secret) to assume the UAMI; run `kubectl apply -k deploy/overlays/<env>` after ensuring `webapp-migrate` Job completes successfully before the webapp Deployment rolls out (wave annotation or explicit `kubectl wait --for=condition=complete job/webapp-migrate`)
-- [ ] T116a [US3] Create [infra/modules/alerts.bicep](../../infra/modules/alerts.bicep) provisioning two Azure Monitor alert rules required by the Constitution before prod cutover: (1) a metric alert on Application Insights `requests/failed` filtered to `name == '/readyz' && resultCode startswith '5'` over 5 min with threshold `> 0`; (2) a log-search alert on `customMetrics | where name == 'redaction_failures_total' and value > 0` over 5 min. Both attach to the **existing** Action Group `Application Insights Smart Detection` in `sainitesh-test` (reused via `existing` Bicep reference, no new action group created). Wire the module into `infra/main.bicep`. A failing test in `tests/Infra.Tests` (or a `bicep build` + `jq` assertion in CI) confirms both alert rules are present in the deployed template.
+- [X] T114 [US3] In [.github/workflows/ci.yml](../../.github/workflows/ci.yml), add a `lint-prod-overlay` job that runs `scripts/lint-prod-overlay.sh deploy/overlays/prod`; this job must succeed before `deploy` runs
+- [X] T115 [US3] In ci.yml, wire `trivy-scan` job to run `aquasec/trivy-action` against both `Dockerfile.webapp` and `Dockerfile.mcpserver` built images; **fail the build on any HIGH or CRITICAL CVE**; this job must succeed before `push`
+- [X] T116 [US3] In ci.yml `deploy` job, use GitHub OIDC `azure/login@v2` (no client secret) to assume the UAMI; run `kubectl apply -k deploy/overlays/<env>` after ensuring `webapp-migrate` Job completes successfully before the webapp Deployment rolls out (wave annotation or explicit `kubectl wait --for=condition=complete job/webapp-migrate`)
+- [X] T116a [US3] Create [infra/modules/alerts.bicep](../../infra/modules/alerts.bicep) provisioning two Azure Monitor alert rules required by the Constitution before prod cutover: (1) a metric alert on Application Insights `requests/failed` filtered to `name == '/readyz' && resultCode startswith '5'` over 5 min with threshold `> 0`; (2) a log-search alert on `customMetrics | where name == 'redaction_failures_total' and value > 0` over 5 min. Both attach to the **existing** Action Group `Application Insights Smart Detection` in `sainitesh-test` (reused via `existing` Bicep reference, no new action group created). Wire the module into `infra/main.bicep`. A failing test in `tests/Infra.Tests` (or a `bicep build` + `jq` assertion in CI) confirms both alert rules are present in the deployed template.
 
 **Checkpoint**: All three user stories independently functional. The v1 contract is mechanically guaranteed auth-additive, the network topology enforces MCP→Web App-only egress, Trivy gates the supply chain, and CI prevents `MCP_ALLOW_MUTATIONS` from ever reaching prod.
 

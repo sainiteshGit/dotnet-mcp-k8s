@@ -98,6 +98,18 @@ module postgres 'modules/postgres.bicep' = {
   }
 }
 
+// T116a — Constitution-required alerts (readyz 5xx + redaction_failures_total).
+// Attaches to the EXISTING 'Application Insights Smart Detection' action group
+// in this resource group (auto-created by App Insights provisioning).
+module alerts 'modules/alerts.bicep' = {
+  name: 'alerts-${environment}'
+  params: {
+    location: location
+    environment: environment
+    appInsightsName: 'appi-taskmgr-${environment}'
+  }
+}
+
 // Outputs (re-exported from every module so deploy scripts can capture them).
 output logAnalyticsWorkspaceId string = loganalytics.outputs.workspaceId
 output logAnalyticsWorkspaceName string = loganalytics.outputs.workspaceName
@@ -117,6 +129,9 @@ output uamiPrincipalId string = uami.outputs.principalId
 output uamiClientId string = uami.outputs.clientId
 output uamiResourceId string = uami.outputs.uamiResourceId
 output uamiName string = uami.outputs.uamiName
+
+output readyzAlertId string = alerts.outputs.readyzAlertId
+output redactionAlertId string = alerts.outputs.redactionAlertId
 
 output postgresFqdn string = postgres.outputs.fqdn
 output postgresServerName string = postgres.outputs.serverName

@@ -10,6 +10,7 @@ public static class ErrorCode
 {
     public const string ValidationError = "validation_error";
     public const string NotFound = "not_found";
+    public const string MethodNotAllowed = "method_not_allowed";
     public const string Conflict = "conflict";
     public const string UpstreamUnavailable = "upstream_unavailable";
     public const string MutationsDisabled = "mutations_disabled";

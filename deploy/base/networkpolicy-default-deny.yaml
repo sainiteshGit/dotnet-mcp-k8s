@@ -1,0 +1,19 @@
+# T110 (US3) — Default-deny baseline for the taskmgr namespace.
+#
+# Constitution Principle V ("Secure-by-default networking"): every pod in the
+# namespace starts with zero ingress AND zero egress allowed. Subsequent
+# policies in this folder explicitly re-open the narrow paths the workloads
+# actually need (webapp <- mcp-server ingress, mcp-server -> webapp egress,
+# DNS, OTel collector). Anything not explicitly allowed stays blocked.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: taskmgr
+  labels:
+    app.kubernetes.io/part-of: taskmgr
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

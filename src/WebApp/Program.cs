@@ -75,6 +75,32 @@ if (args.Contains("--migrate"))
 
 app.UseCorrelationId();
 
+// T108 (US3, FR-020) — emit the uniform ErrorEnvelope on bare-bones status
+// responses that ASP.NET would otherwise return with an empty body (most
+// notably 405 Method Not Allowed from the router, and 404 from unmatched
+// routes). Endpoint handlers that already write a body short-circuit this
+// middleware via the `HasStarted` check inside UseStatusCodePages.
+app.UseStatusCodePages(async statusContext =>
+{
+    var http = statusContext.HttpContext;
+    if (http.Response.HasStarted || http.Response.ContentLength is > 0)
+    {
+        return;
+    }
+
+    var (code, message) = http.Response.StatusCode switch
+    {
+        StatusCodes.Status404NotFound => (ErrorCode.NotFound, "Resource not found."),
+        StatusCodes.Status405MethodNotAllowed => (ErrorCode.MethodNotAllowed,
+            $"HTTP method '{http.Request.Method}' is not allowed for this resource."),
+        _ => ("http_" + http.Response.StatusCode, "Request failed."),
+    };
+
+    var envelope = new ErrorEnvelope(new ErrorDetails(code, message, null));
+    http.Response.ContentType = "application/json";
+    await http.Response.WriteAsJsonAsync(envelope).ConfigureAwait(false);
+});
+
 // Spec available in every environment so prod can introspect; UI only in dev.
 app.MapOpenApi("/openapi/{documentName}.json");
 if (app.Environment.IsDevelopment())

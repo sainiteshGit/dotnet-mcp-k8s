@@ -1,0 +1,59 @@
+# T112 (US3) — Lock down egress from the MCP server pods.
+#
+# After the default-deny baseline (T110), the MCP server is the only workload
+# that needs to talk OUT to anything. This policy allows exactly:
+#   - TCP 8080 to webapp pods in this namespace (the backing REST API).
+#   - UDP/TCP 53 to kube-dns in the kube-system namespace (DNS resolution).
+#   - TCP 4317 to any pod labelled `app.kubernetes.io/name: otel-collector`
+#     in the `observability` namespace (OTLP/gRPC traces + metrics export).
+#
+# Anything else — egress to the public internet, to Postgres, to the Kubernetes
+# API, to other namespaces — is denied. Postgres access is intentionally
+# excluded: the MCP server MUST go through the webapp REST surface (FR-035,
+# defence-in-depth) and never reach the database directly.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mcp-server-egress
+  namespace: taskmgr
+  labels:
+    app.kubernetes.io/part-of: taskmgr
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-server
+  policyTypes:
+    - Egress
+  egress:
+    # Webapp REST API.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: webapp
+      ports:
+        - protocol: TCP
+          port: 8080
+    # DNS resolution (kube-system kube-dns / CoreDNS).
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # OpenTelemetry collector (OTLP/gRPC export).
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: otel-collector
+      ports:
+        - protocol: TCP
+          port: 4317

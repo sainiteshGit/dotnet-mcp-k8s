@@ -243,12 +243,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T108 [US3] Ensure the route-discovery and JSON-options changes from T057/T058 cover T103, T104, T105; add `Microsoft.AspNetCore.Authentication` no-op pass-through (or assertion comment) so T106 documents the auth-additive guarantee
-- [ ] T109 [US3] Confirm `scripts/lint-prod-overlay.sh` from T007 satisfies T107; refine grep patterns if needed
-- [ ] T110 [P] [US3] Create [deploy/base/networkpolicy-default-deny.yaml](../../deploy/base/networkpolicy-default-deny.yaml) — denies all ingress AND egress in the `taskmgr` namespace
-- [ ] T111 [P] [US3] Create [deploy/base/networkpolicy-webapp-ingress.yaml](../../deploy/base/networkpolicy-webapp-ingress.yaml) — allows ingress to the webapp Service from pods labelled `app=mcp-server` only (and from kube-system DNS)
-- [ ] T112 [P] [US3] Create [deploy/base/networkpolicy-mcp-egress.yaml](../../deploy/base/networkpolicy-mcp-egress.yaml) — allows egress from pods labelled `app=mcp-server` ONLY to the webapp `ClusterIP` Service (port 80) + DNS (kube-system :53) + the OTel collector; everything else denied
-- [ ] T113 [US3] Update [deploy/base/kustomization.yaml](../../deploy/base/kustomization.yaml) to include the three NetworkPolicy manifests
+- [X] T108 [US3] Ensure the route-discovery and JSON-options changes from T057/T058 cover T103, T104, T105; add `Microsoft.AspNetCore.Authentication` no-op pass-through (or assertion comment) so T106 documents the auth-additive guarantee
+- [X] T109 [US3] Confirm `scripts/lint-prod-overlay.sh` from T007 satisfies T107; refine grep patterns if needed
+- [X] T110 [P] [US3] Create [deploy/base/networkpolicy-default-deny.yaml](../../deploy/base/networkpolicy-default-deny.yaml) — denies all ingress AND egress in the `taskmgr` namespace
+- [X] T111 [P] [US3] Create [deploy/base/networkpolicy-webapp-ingress.yaml](../../deploy/base/networkpolicy-webapp-ingress.yaml) — allows ingress to the webapp Service from pods labelled `app=mcp-server` only (and from kube-system DNS)
+- [X] T112 [P] [US3] Create [deploy/base/networkpolicy-mcp-egress.yaml](../../deploy/base/networkpolicy-mcp-egress.yaml) — allows egress from pods labelled `app=mcp-server` ONLY to the webapp `ClusterIP` Service (port 80) + DNS (kube-system :53) + the OTel collector; everything else denied
+- [X] T113 [US3] Update [deploy/base/kustomization.yaml](../../deploy/base/kustomization.yaml) to include the three NetworkPolicy manifests
 
 ### CI wiring for User Story 3
 

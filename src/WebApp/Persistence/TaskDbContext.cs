@@ -50,8 +50,13 @@ public sealed class TaskDbContext : DbContext
             b.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
             b.Property(x => x.Title).HasColumnName("title").HasMaxLength(200).IsRequired();
             b.Property(x => x.Description).HasColumnName("description").HasMaxLength(2000);
-            b.Property(x => x.Status).HasColumnName("status").HasConversion(statusConverter).HasDefaultValue(Domain.TaskStatus.Todo).IsRequired();
-            b.Property(x => x.Priority).HasColumnName("priority").HasConversion(priorityConverter).HasDefaultValue(Domain.TaskPriority.Medium).IsRequired();
+            // HasSentinel: when the CLR property equals the sentinel value, EF treats it
+            // as "unset" and lets the DB default apply. The enum CLR default is the 0 member
+            // (Todo / Low), which collides with the DB default for Status (harmless) but
+            // silently overwrites explicit "low" priorities with "medium". Pick a sentinel
+            // that matches the DB default so explicit Low/High values always reach the DB.
+            b.Property(x => x.Status).HasColumnName("status").HasConversion(statusConverter).HasDefaultValue(Domain.TaskStatus.Todo).HasSentinel(Domain.TaskStatus.Todo).IsRequired();
+            b.Property(x => x.Priority).HasColumnName("priority").HasConversion(priorityConverter).HasDefaultValue(Domain.TaskPriority.Medium).HasSentinel(Domain.TaskPriority.Medium).IsRequired();
             b.Property(x => x.DueDate).HasColumnName("due_date").HasColumnType("date");
             b.Property(x => x.CreatedAt).HasColumnName("created_at").HasColumnType("timestamptz").IsRequired();
             b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasColumnType("timestamptz").IsRequired();

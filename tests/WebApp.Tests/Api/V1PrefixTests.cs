@@ -1,5 +1,6 @@
 using System.Linq;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,10 +27,11 @@ public sealed class V1PrefixTests
     [Fact]
     public void Every_route_is_under_api_v1_or_an_allowlisted_platform_prefix()
     {
-        // No DB connection string is configured: the host builds but EF Core
-        // queries would fail. EndpointDataSource is populated during host
-        // build, before any request executes, so route discovery is safe.
-        using var factory = new WebApplicationFactory<Program>();
+        // FR-022 governs the *production* surface. The Scalar UI is only
+        // wired in Development (see Program.cs), so we pin the factory to
+        // Production to assert the real public contract.
+        using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(b => b.UseEnvironment("Production"));
         using var scope = factory.Services.CreateScope();
 
         var endpoints = scope.ServiceProvider.GetRequiredService<EndpointDataSource>();

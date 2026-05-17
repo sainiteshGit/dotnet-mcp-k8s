@@ -1,0 +1,31 @@
+# T111 (US3) — Re-open ingress to the webapp Service from the MCP server only.
+#
+# After the default-deny baseline (T110) blocks everything, this policy allows:
+#   - TCP to the webapp container port (8080) from pods labeled
+#     `app.kubernetes.io/name: mcp-server` in the same namespace.
+#
+# DNS-from-anywhere is NOT an ingress concern; the kubelet's livenessProbe and
+# readinessProbe traffic to the webapp originates from the node, not the pod
+# network, and is exempted by Kubernetes itself (probe traffic bypasses
+# NetworkPolicy). No other source can reach the webapp pod network.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: webapp-ingress
+  namespace: taskmgr
+  labels:
+    app.kubernetes.io/part-of: taskmgr
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: webapp
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mcp-server
+      ports:
+        - protocol: TCP
+          port: 8080

@@ -13,10 +13,14 @@ resources:
   # T099 — MCP server (US2).
   - mcp-server-deployment.yaml
   - mcp-server-service.yaml
+  # T110-T112 — NetworkPolicies (US3): default-deny baseline + narrow allowlists.
+  - networkpolicy-default-deny.yaml
+  - networkpolicy-webapp-ingress.yaml
+  - networkpolicy-mcp-egress.yaml
 
 # T066 — webapp Deployment/Service/Job + ConfigMap wired by Phase 3.
 # T099 — MCP server Deployment + Service appended by Phase 4.
-# A NetworkPolicy locking mcp-server -> webapp egress is added in Phase 5.
+# T113 — NetworkPolicies appended by Phase 5.
 
 images:
   - name: __ACR_LOGIN_SERVER__/taskmgr-webapp

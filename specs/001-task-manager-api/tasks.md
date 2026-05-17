@@ -176,13 +176,13 @@
 - [X] T072 [P] [US2] Pipeline test in [tests/McpServer.Tests/Pipeline/CorrelationIdHandlerTests.cs](../../tests/McpServer.Tests/Pipeline/CorrelationIdHandlerTests.cs) — inbound `_meta.correlationId` is forwarded as `X-Correlation-Id` on the backing call; absent inbound → ULID generated and echoed in tool response (FR-041, FR-042)
 - [X] T073 [P] [US2] Pipeline test in [tests/McpServer.Tests/Pipeline/ResiliencePipelineTests.cs](../../tests/McpServer.Tests/Pipeline/ResiliencePipelineTests.cs) — Polly v8 timeout + retry + circuit breaker stays within the 5 s budget (SC-009); unreachable upstream returns `upstream_unavailable` envelope (FR-044)
 - [X] T074 [P] [US2] Mutation-gate test in [tests/McpServer.Tests/Mutation/MutationGateTests.cs](../../tests/McpServer.Tests/Mutation/MutationGateTests.cs) — when `MCP_ALLOW_MUTATIONS` is unset/empty/`false`/any non-`true` value, every mutation tool returns the `mutations_disabled` envelope from [contracts/mcp-tools.md](./contracts/mcp-tools.md#mutation-gate-principle-ii) **without issuing any HTTP call** (verified by WireMock recording zero calls)
-- [ ] T075 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/CreateTaskToolTests.cs](../../tests/McpServer.Tests/Tools/CreateTaskToolTests.cs) using WireMock.Net (acceptance scenario 1)
-- [ ] T076 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/ListTasksToolTests.cs](../../tests/McpServer.Tests/Tools/ListTasksToolTests.cs) — filters + pagination forwarded, page_size capped at 100 (scenario 2, FR-032)
-- [ ] T077 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/GetTaskToolTests.cs](../../tests/McpServer.Tests/Tools/GetTaskToolTests.cs) — unknown id → structured `not_found` error, no exception leaked (scenario 3, FR-043)
-- [ ] T078 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/UpdateTaskStatusToolTests.cs](../../tests/McpServer.Tests/Tools/UpdateTaskStatusToolTests.cs) — only `status` patched, other fields untouched (scenario 4, FR-033)
-- [ ] T079 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/UpdateTaskPriorityToolTests.cs](../../tests/McpServer.Tests/Tools/UpdateTaskPriorityToolTests.cs) — only `priority` patched (FR-033)
-- [ ] T080 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/DeleteTaskToolTests.cs](../../tests/McpServer.Tests/Tools/DeleteTaskToolTests.cs) — valid id → success; unknown id → `not_found`; no crash (scenario 6)
-- [ ] T081 [P] [US2] Health-check test in [tests/McpServer.Tests/HealthChecks/HealthEndpointTests.cs](../../tests/McpServer.Tests/HealthChecks/HealthEndpointTests.cs) — `/healthz` always 200; `/readyz` 200 only when backing Web App reachable
+- [X] T075 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/CreateTaskToolTests.cs](../../tests/McpServer.Tests/Tools/CreateTaskToolTests.cs) using WireMock.Net (acceptance scenario 1)
+- [X] T076 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/ListTasksToolTests.cs](../../tests/McpServer.Tests/Tools/ListTasksToolTests.cs) — filters + pagination forwarded, page_size capped at 100 (scenario 2, FR-032)
+- [X] T077 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/GetTaskToolTests.cs](../../tests/McpServer.Tests/Tools/GetTaskToolTests.cs) — unknown id → structured `not_found` error, no exception leaked (scenario 3, FR-043)
+- [X] T078 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/UpdateTaskStatusToolTests.cs](../../tests/McpServer.Tests/Tools/UpdateTaskStatusToolTests.cs) — only `status` patched, other fields untouched (scenario 4, FR-033)
+- [X] T079 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/UpdateTaskPriorityToolTests.cs](../../tests/McpServer.Tests/Tools/UpdateTaskPriorityToolTests.cs) — only `priority` patched (FR-033)
+- [X] T080 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/DeleteTaskToolTests.cs](../../tests/McpServer.Tests/Tools/DeleteTaskToolTests.cs) — valid id → success; unknown id → `not_found`; no crash (scenario 6)
+- [X] T081 [P] [US2] Health-check test in [tests/McpServer.Tests/HealthChecks/HealthEndpointTests.cs](../../tests/McpServer.Tests/HealthChecks/HealthEndpointTests.cs) — `/healthz` always 200; `/readyz` 200 only when backing Web App reachable
 
 ### Backing client + resilience pipeline (after tests above are RED)
 
@@ -195,17 +195,17 @@
 
 - [ ] T086 [US2] Implement `MutationGate` reading `MCP_ALLOW_MUTATIONS` (case-insensitive `true`) in [src/McpServer/Mutation/MutationGate.cs](../../src/McpServer/Mutation/MutationGate.cs); implement `MutationsDisabledResult` matching the [contracts/mcp-tools.md](./contracts/mcp-tools.md#structured-mutations_disabled-response) envelope — T074 turns GREEN
 - [X] T087 [US2] Implement `ErrorTranslator` in [src/McpServer/Tools/ErrorTranslator.cs](../../src/McpServer/Tools/ErrorTranslator.cs) mapping backing `ErrorEnvelope` → MCP `isError:true` envelope (FR-043) and circuit/timeout failures → `upstream_unavailable` (FR-044)
-- [ ] T088 [P] [US2] Implement `CreateTaskTool` in [src/McpServer/Tools/CreateTaskTool.cs](../../src/McpServer/Tools/CreateTaskTool.cs) — gated by `MutationGate` — T075 turns GREEN
-- [ ] T089 [P] [US2] Implement `ListTasksTool` in [src/McpServer/Tools/ListTasksTool.cs](../../src/McpServer/Tools/ListTasksTool.cs) — T076 turns GREEN
-- [ ] T090 [P] [US2] Implement `GetTaskTool` in [src/McpServer/Tools/GetTaskTool.cs](../../src/McpServer/Tools/GetTaskTool.cs) — T077 turns GREEN
-- [ ] T091 [P] [US2] Implement `UpdateTaskStatusTool` in [src/McpServer/Tools/UpdateTaskStatusTool.cs](../../src/McpServer/Tools/UpdateTaskStatusTool.cs) — gated; T078 turns GREEN
-- [ ] T092 [P] [US2] Implement `UpdateTaskPriorityTool` in [src/McpServer/Tools/UpdateTaskPriorityTool.cs](../../src/McpServer/Tools/UpdateTaskPriorityTool.cs) — gated; T079 turns GREEN
-- [ ] T093 [P] [US2] Implement `DeleteTaskTool` in [src/McpServer/Tools/DeleteTaskTool.cs](../../src/McpServer/Tools/DeleteTaskTool.cs) — gated; T080 turns GREEN
-- [ ] T094 [US2] Register all 6 tools with the MCP host using `ModelContextProtocol` SDK `.WithHttpTransport()` in `src/McpServer/Program.cs`; pin MCP spec `2025-06-18` — T071 turns GREEN
+- [X] T088 [P] [US2] Implement `CreateTaskTool` in [src/McpServer/Tools/CreateTaskTool.cs](../../src/McpServer/Tools/CreateTaskTool.cs) — gated by `MutationGate` — T075 turns GREEN
+- [X] T089 [P] [US2] Implement `ListTasksTool` in [src/McpServer/Tools/ListTasksTool.cs](../../src/McpServer/Tools/ListTasksTool.cs) — T076 turns GREEN
+- [X] T090 [P] [US2] Implement `GetTaskTool` in [src/McpServer/Tools/GetTaskTool.cs](../../src/McpServer/Tools/GetTaskTool.cs) — T077 turns GREEN
+- [X] T091 [P] [US2] Implement `UpdateTaskStatusTool` in [src/McpServer/Tools/UpdateTaskStatusTool.cs](../../src/McpServer/Tools/UpdateTaskStatusTool.cs) — gated; T078 turns GREEN
+- [X] T092 [P] [US2] Implement `UpdateTaskPriorityTool` in [src/McpServer/Tools/UpdateTaskPriorityTool.cs](../../src/McpServer/Tools/UpdateTaskPriorityTool.cs) — gated; T079 turns GREEN
+- [X] T093 [P] [US2] Implement `DeleteTaskTool` in [src/McpServer/Tools/DeleteTaskTool.cs](../../src/McpServer/Tools/DeleteTaskTool.cs) — gated; T080 turns GREEN
+- [X] T094 [US2] Register all 6 tools with the MCP host using `ModelContextProtocol` SDK `.WithHttpTransport()` in `src/McpServer/Program.cs`; pin MCP spec `2025-06-18` — T071 turns GREEN
 
 ### Health checks (US2 portion)
 
-- [ ] T095 [US2] Implement `/healthz` and `/readyz` (readyz pings Web App `/healthz`) in [src/McpServer/HealthChecks/HealthEndpoints.cs](../../src/McpServer/HealthChecks/HealthEndpoints.cs) — T081 turns GREEN
+- [X] T095 [US2] Implement `/healthz` and `/readyz` (readyz pings Web App `/healthz`) in [src/McpServer/HealthChecks/HealthEndpoints.cs](../../src/McpServer/HealthChecks/HealthEndpoints.cs) — T081 turns GREEN
 
 ### Container
 

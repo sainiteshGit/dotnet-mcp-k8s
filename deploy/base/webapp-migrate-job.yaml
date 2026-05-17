@@ -1,0 +1,83 @@
+# T065 — Pre-deploy migration Job. Runs `dotnet WebApp.dll --migrate` against
+# the live Postgres instance using the same UAMI/ServiceAccount as the
+# Deployment. Argo CD / Helm-style ordering: the wave annotation makes this
+# Job execute BEFORE the webapp Deployment becomes ready.
+#
+# Inherits the same securityContext as the Deployment (Principle IV) so the
+# attack surface of migrations is identical to the running app.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: webapp-migrate
+  namespace: taskmgr
+  labels:
+    app.kubernetes.io/name: webapp-migrate
+    app.kubernetes.io/part-of: taskmgr
+  annotations:
+    # Argo CD sync wave: lower numbers run first.
+    argocd.argoproj.io/sync-wave: "-10"
+    # Helm-equivalent ordering hint for tooling that respects it.
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: webapp-migrate
+        app.kubernetes.io/part-of: taskmgr
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: taskmgr-sa
+      automountServiceAccountToken: true
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: __ACR_LOGIN_SERVER__/taskmgr-webapp:__IMAGE_TAG__
+          imagePullPolicy: IfNotPresent
+          args: ["--migrate"]
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: webapp-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: webapp-config
+                  key: POSTGRES_DATABASE
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: webapp-config
+                  key: POSTGRES_USER
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

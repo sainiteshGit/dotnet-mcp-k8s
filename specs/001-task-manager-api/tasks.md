@@ -108,24 +108,24 @@
 
 ### Failing tests for User Story 1 (write FIRST — Principle III) ⚠️
 
-- [ ] T041 [P] [US1] Contract test in [tests/WebApp.Tests/Api/CreateTaskContractTests.cs](../../tests/WebApp.Tests/Api/CreateTaskContractTests.cs) — `POST /api/v1/tasks` returns 201 with full task body, defaults `status=todo` `priority=medium`, populates timestamps (acceptance scenario 1, FR-010, FR-002)
-- [ ] T042 [P] [US1] Contract test in [tests/WebApp.Tests/Api/GetTaskContractTests.cs](../../tests/WebApp.Tests/Api/GetTaskContractTests.cs) — `GET /api/v1/tasks/{id}` returns 200/404 (scenarios 2, 8, FR-012)
-- [ ] T043 [P] [US1] Contract test in [tests/WebApp.Tests/Api/ListTasksContractTests.cs](../../tests/WebApp.Tests/Api/ListTasksContractTests.cs) — filters `status`/`priority`/`due_before`/`due_after`, pagination `page`/`page_size`, response includes `items`+`page`+`page_size`+`total` (scenario 3, FR-011)
-- [ ] T044 [P] [US1] Contract test in [tests/WebApp.Tests/Api/PutTaskContractTests.cs](../../tests/WebApp.Tests/Api/PutTaskContractTests.cs) — `PUT /api/v1/tasks/{id}` full replacement, missing required field → 400 (scenario 4, FR-013, edge case)
-- [ ] T045 [P] [US1] Contract test in [tests/WebApp.Tests/Api/PatchTaskContractTests.cs](../../tests/WebApp.Tests/Api/PatchTaskContractTests.cs) — `PATCH /api/v1/tasks/{id}` partial; status-only and priority-only patches; empty body → 400 (scenario 5, FR-014)
-- [ ] T046 [P] [US1] Contract test in [tests/WebApp.Tests/Api/DeleteTaskContractTests.cs](../../tests/WebApp.Tests/Api/DeleteTaskContractTests.cs) — `DELETE` returns 204; subsequent GET returns 404; second DELETE returns 404 (scenario 6, FR-015, edge case)
-- [ ] T047 [P] [US1] Validation test in [tests/WebApp.Tests/Validation/TaskValidatorTests.cs](../../tests/WebApp.Tests/Validation/TaskValidatorTests.cs) covering ALL [data-model.md](./data-model.md) validation rules: title 0/1/200/201, description 2000/2001, invalid enums, malformed `due_date`, pagination bounds, filter window (FR-003 through FR-006, SC-008)
-- [ ] T048 [P] [US1] Integration test in [tests/WebApp.Tests/Integration/PostgresPersistenceTests.cs](../../tests/WebApp.Tests/Integration/PostgresPersistenceTests.cs) using `Testcontainers.PostgreSql` — verifies initial migration applies, CHECK constraints reject invalid rows, indexes exist
-- [ ] T049 [P] [US1] Health-check test in [tests/WebApp.Tests/HealthChecks/HealthEndpointTests.cs](../../tests/WebApp.Tests/HealthChecks/HealthEndpointTests.cs) — `/healthz` returns 200 always; `/readyz` returns 200 only when DB reachable, 503 otherwise
+- [X] T041 [P] [US1] Contract test in [tests/WebApp.Tests/Api/CreateTaskContractTests.cs](../../tests/WebApp.Tests/Api/CreateTaskContractTests.cs) — `POST /api/v1/tasks` returns 201 with full task body, defaults `status=todo` `priority=medium`, populates timestamps (acceptance scenario 1, FR-010, FR-002)
+- [X] T042 [P] [US1] Contract test in [tests/WebApp.Tests/Api/GetTaskContractTests.cs](../../tests/WebApp.Tests/Api/GetTaskContractTests.cs) — `GET /api/v1/tasks/{id}` returns 200/404 (scenarios 2, 8, FR-012)
+- [X] T043 [P] [US1] Contract test in [tests/WebApp.Tests/Api/ListTasksContractTests.cs](../../tests/WebApp.Tests/Api/ListTasksContractTests.cs) — filters `status`/`priority`/`due_before`/`due_after`, pagination `page`/`page_size`, response includes `items`+`page`+`page_size`+`total` (scenario 3, FR-011)
+- [X] T044 [P] [US1] Contract test in [tests/WebApp.Tests/Api/PutTaskContractTests.cs](../../tests/WebApp.Tests/Api/PutTaskContractTests.cs) — `PUT /api/v1/tasks/{id}` full replacement, missing required field → 400 (scenario 4, FR-013, edge case)
+- [X] T045 [P] [US1] Contract test in [tests/WebApp.Tests/Api/PatchTaskContractTests.cs](../../tests/WebApp.Tests/Api/PatchTaskContractTests.cs) — `PATCH /api/v1/tasks/{id}` partial; status-only and priority-only patches; empty body → 400 (scenario 5, FR-014)
+- [X] T046 [P] [US1] Contract test in [tests/WebApp.Tests/Api/DeleteTaskContractTests.cs](../../tests/WebApp.Tests/Api/DeleteTaskContractTests.cs) — `DELETE` returns 204; subsequent GET returns 404; second DELETE returns 404 (scenario 6, FR-015, edge case)
+- [X] T047 [P] [US1] Validation test in [tests/WebApp.Tests/Validation/TaskValidatorTests.cs](../../tests/WebApp.Tests/Validation/TaskValidatorTests.cs) covering ALL [data-model.md](./data-model.md) validation rules: title 0/1/200/201, description 2000/2001, invalid enums, malformed `due_date`, pagination bounds, filter window (FR-003 through FR-006, SC-008)
+- [X] T048 [P] [US1] Integration test in [tests/WebApp.Tests/Integration/PostgresPersistenceTests.cs](../../tests/WebApp.Tests/Integration/PostgresPersistenceTests.cs) using `Testcontainers.PostgreSql` — verifies initial migration applies, CHECK constraints reject invalid rows, indexes exist
+- [X] T049 [P] [US1] Health-check test in [tests/WebApp.Tests/HealthChecks/HealthEndpointTests.cs](../../tests/WebApp.Tests/HealthChecks/HealthEndpointTests.cs) — `/healthz` returns 200 always; `/readyz` returns 200 only when DB reachable, 503 otherwise
 
 ### Domain + persistence implementation (after tests above are RED)
 
-- [ ] T050 [P] [US1] Define `TaskItem` entity, `TaskStatus`, `TaskPriority` enums in [src/WebApp/Domain/TaskItem.cs](../../src/WebApp/Domain/TaskItem.cs) per [data-model.md](./data-model.md)
-- [ ] T051 [P] [US1] Implement `TaskListPage<T>` DTO in [src/WebApp/Domain/TaskListPage.cs](../../src/WebApp/Domain/TaskListPage.cs)
-- [ ] T052 [US1] Implement `TaskDbContext` and EF Core configuration in [src/WebApp/Persistence/TaskDbContext.cs](../../src/WebApp/Persistence/TaskDbContext.cs) (enum value converters, indexes `ix_tasks_status_priority_due_date` and `ix_tasks_created_at_desc`, `Id` `ValueGeneratedNever()`); depends on T050
-- [ ] T053 [US1] Generate initial migration `0001_initial` in [src/WebApp/Persistence/Migrations/](../../src/WebApp/Persistence/Migrations/) producing the schema in [data-model.md](./data-model.md) (including `pgcrypto` extension and CHECK constraints); depends on T052
-- [ ] T054 [P] [US1] Implement FluentValidation validators in [src/WebApp/Validation/](../../src/WebApp/Validation/) (`CreateTaskValidator.cs`, `UpdateTaskValidator.cs`, `PatchTaskValidator.cs`, `ListTasksQueryValidator.cs`) — T047 turns GREEN
-- [ ] T055 [US1] Implement repository / service layer in [src/WebApp/Persistence/TaskRepository.cs](../../src/WebApp/Persistence/TaskRepository.cs) with create/get/list (with filters+pagination)/replace/patch/delete
+- [X] T050 [P] [US1] Define `TaskItem` entity, `TaskStatus`, `TaskPriority` enums in [src/WebApp/Domain/TaskItem.cs](../../src/WebApp/Domain/TaskItem.cs) per [data-model.md](./data-model.md)
+- [X] T051 [P] [US1] Implement `TaskListPage<T>` DTO in [src/WebApp/Domain/TaskListPage.cs](../../src/WebApp/Domain/TaskListPage.cs)
+- [X] T052 [US1] Implement `TaskDbContext` and EF Core configuration in [src/WebApp/Persistence/TaskDbContext.cs](../../src/WebApp/Persistence/TaskDbContext.cs) (enum value converters, indexes `ix_tasks_status_priority_due_date` and `ix_tasks_created_at_desc`, `Id` `ValueGeneratedNever()`); depends on T050
+- [X] T053 [US1] Generate initial migration `0001_initial` in [src/WebApp/Persistence/Migrations/](../../src/WebApp/Persistence/Migrations/) producing the schema in [data-model.md](./data-model.md) (including `pgcrypto` extension and CHECK constraints); depends on T052
+- [X] T054 [P] [US1] Implement FluentValidation validators in [src/WebApp/Validation/](../../src/WebApp/Validation/) (`CreateTaskValidator.cs`, `UpdateTaskValidator.cs`, `PatchTaskValidator.cs`, `ListTasksQueryValidator.cs`) — T047 turns GREEN
+- [X] T055 [US1] Implement repository / service layer in [src/WebApp/Persistence/TaskRepository.cs](../../src/WebApp/Persistence/TaskRepository.cs) with create/get/list (with filters+pagination)/replace/patch/delete
 
 ### API endpoint implementation
 
@@ -141,24 +141,24 @@
 
 ### Container
 
-- [ ] T062 [US1] Create [Dockerfile.webapp](../../Dockerfile.webapp) — multi-stage build, `ARG BASE_IMAGE` sourced from `infra/base-images.lock`, runs as uid `10001`, no shell in final layer
+- [X] T062 [US1] Create [Dockerfile.webapp](../../Dockerfile.webapp) — multi-stage build, `ARG BASE_IMAGE` sourced from `infra/base-images.lock`, runs as uid `10001`, no shell in final layer
 
 ### Kustomize (webapp manifests, in `deploy/base/`)
 
-- [ ] T063 [P] [US1] Create [deploy/base/webapp-deployment.yaml](../../deploy/base/webapp-deployment.yaml) with the constitution's pod `securityContext` (non-root 10001, `readOnlyRootFilesystem`, `allowPrivilegeEscalation=false`, `capabilities.drop=["ALL"]`, `seccompProfile=RuntimeDefault`, writable `emptyDir` at `/tmp` only), `azure.workload.identity/use: "true"`, liveness=`/healthz`, readiness=`/readyz`, 2 replicas
-- [ ] T064 [P] [US1] Create [deploy/base/webapp-service.yaml](../../deploy/base/webapp-service.yaml) — `ClusterIP` on port 80 → container 8080
-- [ ] T065 [US1] Create [deploy/base/webapp-migrate-job.yaml](../../deploy/base/webapp-migrate-job.yaml) — Kubernetes `Job` `webapp-migrate` that runs `dotnet WebApp.dll migrate` (or `efbundle`) against Postgres BEFORE the Web App `Deployment` rolls out; uses the same UAMI/SA; restartPolicy=`OnFailure`; ordered via Argo/Kustomize annotation or wave hook so it completes before the Deployment becomes ready
-- [ ] T066 [US1] Update [deploy/base/kustomization.yaml](../../deploy/base/kustomization.yaml) to include `webapp-deployment.yaml`, `webapp-service.yaml`, `webapp-migrate-job.yaml`
+- [X] T063 [P] [US1] Create [deploy/base/webapp-deployment.yaml](../../deploy/base/webapp-deployment.yaml) with the constitution's pod `securityContext` (non-root 10001, `readOnlyRootFilesystem`, `allowPrivilegeEscalation=false`, `capabilities.drop=["ALL"]`, `seccompProfile=RuntimeDefault`, writable `emptyDir` at `/tmp` only), `azure.workload.identity/use: "true"`, liveness=`/healthz`, readiness=`/readyz`, 2 replicas
+- [X] T064 [P] [US1] Create [deploy/base/webapp-service.yaml](../../deploy/base/webapp-service.yaml) — `ClusterIP` on port 80 → container 8080
+- [X] T065 [US1] Create [deploy/base/webapp-migrate-job.yaml](../../deploy/base/webapp-migrate-job.yaml) — Kubernetes `Job` `webapp-migrate` that runs `dotnet WebApp.dll migrate` (or `efbundle`) against Postgres BEFORE the Web App `Deployment` rolls out; uses the same UAMI/SA; restartPolicy=`OnFailure`; ordered via Argo/Kustomize annotation or wave hook so it completes before the Deployment becomes ready
+- [X] T066 [US1] Update [deploy/base/kustomization.yaml](../../deploy/base/kustomization.yaml) to include `webapp-deployment.yaml`, `webapp-service.yaml`, `webapp-migrate-job.yaml`
 
 ### Bicep (Postgres for US1)
 
-- [ ] T067 [US1] Create [infra/modules/postgres.bicep](../../infra/modules/postgres.bicep) — Azure Database for PostgreSQL Flexible Server, **Burstable B1ms**, Entra ID admin only (no admin password), `pgcrypto` extension allowed; outputs FQDN
-- [ ] T068 [US1] Wire `postgres.bicep` into [infra/main.bicep](../../infra/main.bicep); add Postgres FQDN as a Kustomize ConfigMap value or env var on the webapp Deployment
+- [X] T067 [US1] Create [infra/modules/postgres.bicep](../../infra/modules/postgres.bicep) — Azure Database for PostgreSQL Flexible Server, **Burstable B1ms**, Entra ID admin only (no admin password), `pgcrypto` extension allowed; outputs FQDN
+- [X] T068 [US1] Wire `postgres.bicep` into [infra/main.bicep](../../infra/main.bicep); add Postgres FQDN as a Kustomize ConfigMap value or env var on the webapp Deployment
 
 ### CI wiring for US1
 
-- [ ] T069 [US1] In [.github/workflows/ci.yml](../../.github/workflows/ci.yml), wire `build` → `dotnet build TaskManager.sln`; `unit-tests` → `dotnet test tests/WebApp.Tests` with coverage; `integration-tests` → `dotnet test --filter Category=Integration` (Testcontainers); enforce **≥ 80 %** line coverage gate
-- [ ] T070 [US1] In ci.yml `push` job, build `Dockerfile.webapp`, tag with git SHA, push to ACR via Workload Identity (`az acr login` + `docker push`) — depends on prior jobs
+- [X] T069 [US1] In [.github/workflows/ci.yml](../../.github/workflows/ci.yml), wire `build` → `dotnet build TaskManager.sln`; `unit-tests` → `dotnet test tests/WebApp.Tests` with coverage; `integration-tests` → `dotnet test --filter Category=Integration` (Testcontainers); enforce **≥ 80 %** line coverage gate
+- [X] T070 [US1] In ci.yml `push` job, build `Dockerfile.webapp`, tag with git SHA, push to ACR via Workload Identity (`az acr login` + `docker push`) — depends on prior jobs
 
 **Checkpoint**: User Story 1 fully functional. The Web App can be `kubectl apply -k deploy/overlays/dev`-ed, the migrate Job runs first, and all 8 acceptance scenarios pass against the deployed `/api/v1/tasks` surface. MVP shippable.
 

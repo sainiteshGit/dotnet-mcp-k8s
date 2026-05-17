@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1.7
+#
+# T062 — Web App image. Multi-stage build:
+#   - build stage:   .NET 10 SDK Alpine (restore + publish, layer-cached)
+#   - runtime stage: ASPNET runtime pinned by digest via BASE_IMAGE ARG
+#                    (single source of truth: infra/base-images.lock)
+#
+# Constitution Principle IV: base images are pinned by sha256 digest, runtime
+# layer has NO shell tooling (`curl`/`wget` are intentionally omitted), pod
+# runs as non-root uid 10001 with a read-only root filesystem (writable
+# `emptyDir` mounted at /tmp by the Deployment, T063).
+
+ARG BASE_IMAGE=mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:1e37a8236c558ae31bd6bc8144e38e6036b73cf1b0616fe56d79e60babb9d93b
+
+# ---------- build ----------
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+WORKDIR /src
+
+# Restore (cached on lockfile churn only)
+COPY Directory.Build.props Directory.Packages.props ./
+COPY src/WebApp/WebApp.csproj src/WebApp/
+RUN dotnet restore src/WebApp/WebApp.csproj -r linux-musl-x64
+
+# Build + publish
+COPY src/WebApp/ src/WebApp/
+RUN dotnet publish src/WebApp/WebApp.csproj \
+        -c Release \
+        -r linux-musl-x64 \
+        --no-restore \
+        --self-contained false \
+        -o /app/publish \
+        /p:UseAppHost=false
+
+# ---------- runtime ----------
+FROM ${BASE_IMAGE} AS final
+
+# Non-root uid (matches deploy/base/webapp-deployment.yaml securityContext)
+ARG APP_UID=10001
+WORKDIR /app
+COPY --from=build --chown=${APP_UID}:${APP_UID} /app/publish ./
+
+USER ${APP_UID}
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080 \
+    DOTNET_RUNNING_IN_CONTAINER=true \
+    DOTNET_EnableDiagnostics=0
+
+ENTRYPOINT ["dotnet", "WebApp.dll"]

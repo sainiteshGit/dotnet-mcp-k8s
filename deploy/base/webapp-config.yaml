@@ -1,0 +1,19 @@
+# T065 — ConfigMap source for Postgres connection metadata. Values are
+# substituted at deploy time by the CI deploy job (T070) using the outputs
+# from infra/main.bicep:
+#   postgresHost      <- postgres.outputs.fqdn
+#   postgresDatabase  <- postgres.outputs.databaseName (default `taskmgr`)
+#   postgresUser      <- uami.outputs.uamiName (Entra principal name)
+#
+# Auth is via Workload Identity (Azure AD token, ossrdbms scope) — no password.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webapp-config
+  namespace: taskmgr
+  labels:
+    app.kubernetes.io/part-of: taskmgr
+data:
+  POSTGRES_HOST: __POSTGRES_HOST__
+  POSTGRES_DATABASE: __POSTGRES_DATABASE__
+  POSTGRES_USER: __POSTGRES_USER__

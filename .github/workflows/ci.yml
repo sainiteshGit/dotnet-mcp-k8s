@@ -104,24 +104,102 @@ jobs:
     needs: assert-providers
     runs-on: ubuntu-latest
     steps:
-      - name: TODO(Phase 3 T069) — dotnet build TaskManager.sln
-        run: echo "build job skeleton — wired by T069"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore TaskManager.sln
+
+      - name: Build (Release, warnings-as-errors enforced by Directory.Build.props)
+        run: dotnet build TaskManager.sln -c Release --no-restore
 
   unit-tests:
     name: Unit tests
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: TODO(Phase 3 T069 / Phase 4 T101) — dotnet test with ≥80% coverage gate
-        run: echo "unit-tests job skeleton — wired by T069 and T101"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Bash history expansion would mangle the `!=` filter, so we set +H first.
+      - name: Run unit tests (Category != Integration) with coverage
+        shell: bash
+        run: |
+          set +H
+          dotnet test TaskManager.sln \
+            -c Release \
+            --filter 'Category!=Integration' \
+            --logger 'trx;LogFileName=unit-tests.trx' \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report + enforce ≥80% line coverage
+        shell: bash
+        run: |
+          reportgenerator \
+            -reports:'TestResults/**/coverage.cobertura.xml' \
+            -targetdir:./TestResults/coverage \
+            -reporttypes:'Html;TextSummary;Cobertura' \
+            -title:'Task Manager API'
+          cat TestResults/coverage/Summary.txt
+          line=$(grep -E '^Line coverage:' TestResults/coverage/Summary.txt | head -1 | sed -E 's/.*: *([0-9.]+)%.*/\1/')
+          echo "Line coverage = ${line}%"
+          awk -v c="$line" 'BEGIN { exit (c+0 >= 80 ? 0 : 1) }' || {
+            echo "::error::Line coverage ${line}% is below the 80% gate."
+            exit 1
+          }
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: TestResults/coverage
 
   integration-tests:
     name: Integration tests
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: TODO(Phase 3 T069) — Testcontainers.PostgreSql integration tests
-        run: echo "integration-tests job skeleton — wired by T069"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # ubuntu-latest ships with Docker, which Testcontainers.PostgreSql needs.
+      - name: Run Testcontainers-backed integration tests (Category=Integration)
+        shell: bash
+        run: |
+          set +H
+          dotnet test TaskManager.sln \
+            -c Release \
+            --filter 'Category=Integration' \
+            --logger 'trx;LogFileName=integration-tests.trx' \
+            --results-directory ./TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: TestResults/*.trx
 
   trivy-scan:
     name: Trivy CVE scan
@@ -135,9 +213,48 @@ jobs:
     name: Push images
     needs: trivy-scan
     runs-on: ubuntu-latest
+    # Only push on merges to main, not on PRs.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      ACR_NAME: acrtaskmgrdev
+      IMAGE_REPO: taskmgr-webapp
     steps:
-      - name: TODO(Phase 3 T070 / Phase 4 T102) — build and push both images to ACR
-        run: echo "push job skeleton — wired by T070 and T102"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve ACR login server
+        id: acr
+        shell: bash
+        run: |
+          login_server=$(az acr show -n "${ACR_NAME}" --query loginServer -o tsv)
+          echo "login_server=${login_server}" >> "$GITHUB_OUTPUT"
+          echo "Resolved login server: ${login_server}"
+
+      - name: ACR login
+        run: az acr login -n "${ACR_NAME}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # T070 — build the webapp image from Dockerfile.webapp (T062) and push
+      # to ACR. The MCP image (T102) will reuse this job pattern.
+      - name: Build and push webapp image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.webapp
+          push: true
+          provenance: false
+          tags: |
+            ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_REPO }}:${{ github.sha }}
+            ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_REPO }}:latest
 
   deploy:
     name: Deploy

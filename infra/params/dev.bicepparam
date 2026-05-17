@@ -11,6 +11,10 @@ param environment = 'dev'
 // ACR names must be globally unique, 5-50 alphanumeric chars.
 param acrName = 'acrtaskmgrdev'
 
+// Postgres Flexible Server names must be globally unique within Azure DNS.
+param postgresServerName = 'pg-taskmgr-dev'
+param postgresDatabaseName = 'taskmgr'
+
 // Reuse-or-create: populated by scripts/aks-discover.sh before deploy.
 // Leave both empty to let aks.bicep create a fresh cluster.
 param existingAksName = ''

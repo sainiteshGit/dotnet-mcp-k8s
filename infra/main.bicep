@@ -37,6 +37,12 @@ param existingAksOidcIssuerUrl string = ''
 @description('Daily ingestion cap in GB for Log Analytics. -1 means unlimited.')
 param logAnalyticsDailyQuotaGb int = -1
 
+@description('Globally-unique Postgres Flexible Server name (3-63 lowercase alphanumeric/hyphen).')
+param postgresServerName string
+
+@description('Postgres database name created on the server. Default `taskmgr`.')
+param postgresDatabaseName string = 'taskmgr'
+
 var createAks = empty(existingAksName)
 
 module loganalytics 'modules/loganalytics.bicep' = {
@@ -81,6 +87,17 @@ module acr 'modules/acr.bicep' = {
   }
 }
 
+module postgres 'modules/postgres.bicep' = {
+  name: 'postgres-${environment}'
+  params: {
+    location: location
+    serverName: postgresServerName
+    databaseName: postgresDatabaseName
+    uamiClientId: uami.outputs.clientId
+    uamiName: uami.outputs.uamiName
+  }
+}
+
 // Outputs (re-exported from every module so deploy scripts can capture them).
 output logAnalyticsWorkspaceId string = loganalytics.outputs.workspaceId
 output logAnalyticsWorkspaceName string = loganalytics.outputs.workspaceName
@@ -100,3 +117,8 @@ output uamiPrincipalId string = uami.outputs.principalId
 output uamiClientId string = uami.outputs.clientId
 output uamiResourceId string = uami.outputs.uamiResourceId
 output uamiName string = uami.outputs.uamiName
+
+output postgresFqdn string = postgres.outputs.fqdn
+output postgresServerName string = postgres.outputs.serverName
+output postgresDatabaseName string = postgres.outputs.databaseName
+output postgresResourceId string = postgres.outputs.resourceId

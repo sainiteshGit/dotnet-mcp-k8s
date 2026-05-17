@@ -58,7 +58,7 @@
 
     <!-- MCP SDK (stable 1.x) -->
     <PackageVersion Include="ModelContextProtocol" Version="1.3.0" />
-    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="0.3.0-preview.3" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="1.3.0" />
 
     <!-- Testing -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />

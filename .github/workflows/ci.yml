@@ -16,9 +16,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AZURE_SUBSCRIPTION_ID: d3c24b47-6f06-4152-8ade-6be38ba31c8c
-  AZURE_RESOURCE_GROUP: sainitesh-test
-  AZURE_REGION: eastus
+  # Sourced from GitHub repository variables (Settings → Secrets and variables
+  # → Actions → Variables). Hard-coding these is prohibited by the constitution.
+  AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  AZURE_REGION: ${{ vars.AZURE_REGION }}
   DOTNET_VERSION: "10.0.x"
 
 jobs:

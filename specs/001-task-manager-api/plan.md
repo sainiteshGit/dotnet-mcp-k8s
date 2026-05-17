@@ -11,7 +11,7 @@ Deliver two cooperating .NET 10 LTS services to AKS, packaged as separate OCI im
 - **Web App** — ASP.NET Core Minimal APIs over EF Core 10 + PostgreSQL (Azure Database for PostgreSQL Flexible Server), exposing a versioned `/api/v1/` REST surface for the `Task` resource (full CRUD, filtering, pagination, uniform error envelope). It is the source of truth.
 - **MCP Server** — .NET 10 console host using the official `ModelContextProtocol` C# SDK, MCP spec **`2025-06-18`** pinned, HTTP streaming transport. Exposes exactly six tools (`create_task`, `list_tasks`, `get_task`, `update_task_status`, `update_task_priority`, `delete_task`) that call the Web App through a typed `HttpClient` with Polly v8 (timeout + retry + circuit breaker) and propagate `X-Correlation-Id` end-to-end.
 
-Both images are built from `mcr.microsoft.com/dotnet/aspnet:10.0-alpine` pinned by digest, run as non-root uid `10001` with `readOnlyRootFilesystem`, expose `/healthz` and `/readyz`, and are scanned by Trivy in CI. Infrastructure is **Bicep**, deployment is **Kustomize** (`base` + `overlays/dev` + `overlays/prod`). Auth to Azure (and Postgres) is **Azure Workload Identity** (UAMI + federated credential to a K8s `ServiceAccount`); CI pushes/deploys via **GitHub OIDC** to the same UAMI — no stored secrets anywhere. All Azure work is restricted to subscription **`d3c24b47-6f06-4152-8ade-6be38ba31c8c`** / resource group **`sainitesh-test`** (enforced by `scripts/assert-azure-context.sh`).
+Both images are built from `mcr.microsoft.com/dotnet/aspnet:10.0-alpine` pinned by digest, run as non-root uid `10001` with `readOnlyRootFilesystem`, expose `/healthz` and `/readyz`, and are scanned by Trivy in CI. Infrastructure is **Bicep**, deployment is **Kustomize** (`base` + `overlays/dev` + `overlays/prod`). Auth to Azure (and Postgres) is **Azure Workload Identity** (UAMI + federated credential to a K8s `ServiceAccount`); CI pushes/deploys via **GitHub OIDC** to the same UAMI — no stored secrets anywhere. All Azure work is restricted to the subscription / resource group supplied via the `AZURE_SUBSCRIPTION_ID` and `AZURE_RESOURCE_GROUP` env vars (CI repository variables; never committed) and enforced by `scripts/assert-azure-context.sh`.
 
 ## Technical Context
 
@@ -45,7 +45,7 @@ Both images are built from `mcr.microsoft.com/dotnet/aspnet:10.0-alpine` pinned 
 - MCP spec **`2025-06-18`** pinned and asserted by a test that reads the SDK's advertised protocol version.
 - `NetworkPolicy` default-deny in the `taskmgr` namespace; MCP server pod egress allowed only to the Web App `ClusterIP` Service (+ DNS + telemetry collector).
 - Dev overlay sets `MCP_ALLOW_MUTATIONS=true`; prod overlay omits it. `scripts/lint-prod-overlay.sh` (wired into CI) fails the build if the prod overlay ever sets it to `true`.
-- All Azure resources live in subscription `d3c24b47-6f06-4152-8ade-6be38ba31c8c` / RG `sainitesh-test`; `scripts/assert-azure-context.sh` runs first in CI and fails fast on mismatch.
+- All Azure resources live in the subscription / RG supplied via the `AZURE_SUBSCRIPTION_ID` and `AZURE_RESOURCE_GROUP` env vars; `scripts/assert-azure-context.sh` runs first in CI and fails fast on mismatch.
 
 **Scale/Scope**: v1 demo footprint — ~10 000 tasks, one Web App `Deployment` (2 replicas), one MCP server `Deployment` (1–2 replicas), single Postgres Flexible Server (B1ms). Designed so a future auth layer can be added in front of the API without changing the v1 contract (FR-024, SC-007).
 **Cost-Optimized v1 SKU Profile** (cheapest viable tier for every resource; lock-in decision — changing a SKU upward requires a plan amendment):
@@ -82,7 +82,7 @@ Binding constitution: [.specify/memory/constitution.md](../../.specify/memory/co
 | — | **Security: Authorization** | PASS (v1 scope) | API is in-cluster only (no public ingress in v1); FR-024 keeps the contract auth-additive. `NetworkPolicy` default-deny + MCP-server-egress-to-Web-App-only enforces the topology authorization. The UAMI's Azure-side role assignments are least-privilege (`AcrPull` on ACR, Postgres AAD admin only). |
 | — | **Security: TLS + CVE scan** | PASS | No public ingress in v1, so TLS termination is a deferred decision (recorded in [research.md](./research.md)). Trivy scan of both images gates the CI pipeline; HIGH/CRITICAL findings block release. |
 | — | **Deployment: Service Topology** | PASS | Two separate `Deployment`s, separate `Service`s, separate images. MCP server never reaches Postgres directly; it only calls the Web App's `/api/v1/` over `ClusterIP`. The Web App pins no MCP code or knowledge. |
-| — | **Deployment: Azure Targeting** | PASS | All infra is **Bicep** in `infra/` (modules: `uami.bicep`, `acr.bicep`, `postgres.bicep`, `loganalytics.bicep`, `aks.bicep`, `main.bicep`). `scripts/assert-azure-context.sh` runs first in CI and fails fast if `az account show --query id -o tsv` ≠ `d3c24b47-6f06-4152-8ade-6be38ba31c8c` or if the deployment target RG ≠ `sainitesh-test`. AKS reuse-or-create algorithm in [research.md §5](./research.md). |
+| — | **Deployment: Azure Targeting** | PASS | All infra is **Bicep** in `infra/` (modules: `uami.bicep`, `acr.bicep`, `postgres.bicep`, `loganalytics.bicep`, `aks.bicep`, `main.bicep`). `scripts/assert-azure-context.sh` runs first in CI and fails fast if `az account show --query id -o tsv` ≠ `$AZURE_SUBSCRIPTION_ID` or if the deployment target RG ≠ `$AZURE_RESOURCE_GROUP`. AKS reuse-or-create algorithm in [research.md §5](./research.md). |
 | — | **Governance: per-PR constitution-check line** | PASS | PR template carries the required one-line constitution-check statement (added in `.github/PULL_REQUEST_TEMPLATE.md` during scaffolding). |
 
 **Initial gate verdict**: passed. The one exception (Principle II in the dev overlay) is documented, scoped to a single env-var flag in a single overlay, mechanically enforced against prod by `scripts/lint-prod-overlay.sh`, and recorded in *Complexity Tracking* below.
@@ -181,7 +181,7 @@ deploy/                      # Kustomize
         └── kustomization.yaml                # NO MCP_ALLOW_MUTATIONS patch; linted by CI
 
 scripts/
-├── assert-azure-context.sh        # Fails if not subscription d3c24b47…/RG sainitesh-test
+├── assert-azure-context.sh        # Fails if not $AZURE_SUBSCRIPTION_ID / $AZURE_RESOURCE_GROUP
 ├── aks-discover.sh                # Writes infra/aks.discovered.json
 └── lint-prod-overlay.sh           # Fails if prod overlay sets MCP_ALLOW_MUTATIONS=true
 

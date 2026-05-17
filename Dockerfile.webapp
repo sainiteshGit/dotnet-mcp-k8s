@@ -16,17 +16,22 @@ ARG BASE_IMAGE=mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:1e37a8236c558a
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
 
-# Restore (cached on lockfile churn only)
+# Restore + publish in a single step. `$TARGETARCH` is supplied automatically by
+# BuildKit (`amd64` for AKS nodes, `arm64` for Apple Silicon dev laptops); the
+# small `case` maps it to .NET's RID dialect (`x64` / `arm64`). The aspnet
+# runtime image is multi-arch and BuildKit pulls the matching variant.
+# Combining restore+publish is required by SDK 10.0.300 (NETSDK1047 if split).
 COPY Directory.Build.props Directory.Packages.props ./
-COPY src/WebApp/WebApp.csproj src/WebApp/
-RUN dotnet restore src/WebApp/WebApp.csproj -r linux-musl-x64
-
-# Build + publish
 COPY src/WebApp/ src/WebApp/
-RUN dotnet publish src/WebApp/WebApp.csproj \
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+        amd64) DOTNET_RID=linux-musl-x64 ;; \
+        arm64) DOTNET_RID=linux-musl-arm64 ;; \
+        *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    dotnet publish src/WebApp/WebApp.csproj \
         -c Release \
-        -r linux-musl-x64 \
-        --no-restore \
+        -r "${DOTNET_RID}" \
         --self-contained false \
         -o /app/publish \
         /p:UseAppHost=false

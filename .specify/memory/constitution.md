@@ -129,10 +129,10 @@ the API version path; the MCP server pins a specific API version.
 
 All Azure infrastructure MUST be defined as **Bicep** modules checked
 into the repository. Deployment MUST target **Azure Kubernetes Service**
-and MUST be restricted to:
-
-- **Subscription**: `d3c24b47-6f06-4152-8ade-6be38ba31c8c`
-- **Resource Group**: `sainitesh-test`
+and MUST be restricted to a single subscription / resource group pair
+supplied via the `AZURE_SUBSCRIPTION_ID` and `AZURE_RESOURCE_GROUP`
+environment variables (CI repository variables; never committed to the
+repo).
 
 Deployments to any other subscription or resource group are prohibited
 unless this constitution is amended. CI/CD pipelines MUST fail-fast on

@@ -1,0 +1,91 @@
+# docker-compose.local.yml
+#
+# Local end-to-end demo stack (no Azure required). Spins up:
+#   - postgres  : real Postgres 16 with plain-text auth (NOT for prod)
+#   - migrate   : runs `dotnet WebApp.dll --migrate` once, then exits 0
+#   - webapp    : Task Manager REST API on http://localhost:8080
+#   - mcpserver : MCP Streamable HTTP server on http://localhost:8081
+#
+# Bypasses Workload Identity / Entra by injecting ConnectionStrings__Postgres
+# directly on the webapp. MCP_ALLOW_MUTATIONS=true is set so all 6 tools work
+# (this is the documented dev-overlay exception, NOT a prod configuration).
+#
+# Usage:
+#   docker compose -f docker-compose.local.yml up -d --build
+#   curl http://localhost:8080/healthz
+#   curl http://localhost:8081/healthz
+#   docker compose -f docker-compose.local.yml down -v
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: taskmgr-postgres
+    environment:
+      POSTGRES_DB: taskmgr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d taskmgr"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.webapp
+    container_name: taskmgr-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=taskmgr;Username=postgres;Password=postgres"
+    command: ["--migrate"]
+    restart: "no"
+
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.webapp
+    container_name: taskmgr-webapp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      # Development env so the OpenAPI doc + Scalar UI register and we can
+      # poke /scalar/v1 in a browser. Production also works but no UI.
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=taskmgr;Username=postgres;Password=postgres"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mcpserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcpserver
+    container_name: taskmgr-mcpserver
+    depends_on:
+      webapp:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      BACKING_API_BASE_URL: "http://webapp:8080"
+      # Dev-overlay exception (Principle II): mutating tools enabled locally.
+      MCP_ALLOW_MUTATIONS: "true"
+    ports:
+      - "8081:8080"
+
+volumes:
+  pgdata:

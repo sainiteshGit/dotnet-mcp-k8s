@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 # assert-azure-context.sh
 #
-# Fails fast if the active Azure CLI context is not pinned to:
-#   subscription: d3c24b47-6f06-4152-8ade-6be38ba31c8c
-#   resource group (passed as $1): sainitesh-test
+# Fails fast if the active Azure CLI context is not pinned to the expected
+# subscription / resource group. The expected values are supplied via env vars
+# (set in the CI workflow from repository variables; for local runs export them
+# in your shell or a .env file). Hard-coding them in the repo is prohibited by
+# the constitution's "no secrets / no tenant-identifying values" policy.
+#
+# Required env vars:
+#   AZURE_SUBSCRIPTION_ID  expected subscription GUID
+#   AZURE_RESOURCE_GROUP   expected resource group name
 #
 # Usage:   scripts/assert-azure-context.sh <resource-group>
-# Example: scripts/assert-azure-context.sh sainitesh-test
-#
-# Pinned by plan.md / constitution.md. Wired as the FIRST job of CI;
-# every downstream job depends on a green run of this script.
+# Example: AZURE_SUBSCRIPTION_ID=<guid> AZURE_RESOURCE_GROUP=<name> \
+#          scripts/assert-azure-context.sh <name>
 
 set -euo pipefail
 
-readonly EXPECTED_SUB="d3c24b47-6f06-4152-8ade-6be38ba31c8c"
-readonly EXPECTED_RG="sainitesh-test"
+readonly EXPECTED_SUB="${AZURE_SUBSCRIPTION_ID:?AZURE_SUBSCRIPTION_ID env var is required}"
+readonly EXPECTED_RG="${AZURE_RESOURCE_GROUP:?AZURE_RESOURCE_GROUP env var is required}"
 
 if [[ $# -lt 1 ]]; then
   echo "ERROR: missing required argument: <resource-group>" >&2

@@ -1,9 +1,10 @@
 // T035 — main.bicep wires the cost-optimized v1 foundation:
 //   loganalytics → acr → (optional aks) → uami (federated to AKS OIDC issuer).
 //
-// Subscription is pinned to d3c24b47-6f06-4152-8ade-6be38ba31c8c by the
-// CI guard `scripts/assert-azure-context.sh sainitesh-test`. Region is
-// re-verified by `scripts/assert-region-availability.sh eastus`.
+// Subscription / RG targeting is enforced at deploy time by the CI guard
+// `scripts/assert-azure-context.sh` (reads $AZURE_SUBSCRIPTION_ID and
+// $AZURE_RESOURCE_GROUP from the CI environment). Region is re-verified by
+// `scripts/assert-region-availability.sh $AZURE_REGION`.
 //
 // Reuse-or-create: if `existingAksName` is non-empty, the `aks` module is
 // skipped and the OIDC issuer URL is read from `existingAksOidcIssuerUrl`

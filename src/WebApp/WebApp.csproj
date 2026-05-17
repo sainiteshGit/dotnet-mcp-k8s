@@ -1,5 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <!--
+    EF Core scaffolded migrations (Persistence/Migrations/*.cs) are auto-
+    generated and use idioms that the default analyzers flag (CA1825 zero-
+    length array, CA1861 inline array). Suppress at project scope so Release
+    publishes (which run more analyzers than `dotnet test`) don't fail on
+    files we don't hand-edit.
+  -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1825;CA1861</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />

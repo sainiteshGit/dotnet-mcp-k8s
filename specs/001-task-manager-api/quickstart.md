@@ -1,6 +1,10 @@
 # Quickstart
 
-End-to-end walkthrough: local dev loop → tests → cluster deploy. Targets subscription **`d3c24b47-6f06-4152-8ade-6be38ba31c8c`** / resource group **`sainitesh-test`** exclusively.
+End-to-end walkthrough: local dev loop → tests → cluster deploy. Targets the
+subscription / resource group supplied at deploy time via the
+`AZURE_SUBSCRIPTION_ID` and `AZURE_RESOURCE_GROUP` environment variables
+(set as CI repository variables; for local runs export them in your shell
+or a `.env` file). They are intentionally not committed to the repo.
 
 ---
 
@@ -11,7 +15,7 @@ End-to-end walkthrough: local dev loop → tests → cluster deploy. Targets sub
 - Azure CLI 2.60+
 - `kubectl` 1.30+
 - `kustomize` 5.x (or `kubectl -k`)
-- Logged into Azure: `az login` then `az account set --subscription d3c24b47-6f06-4152-8ade-6be38ba31c8c`
+- Logged into Azure: `az login` then `az account set --subscription "$AZURE_SUBSCRIPTION_ID"`
 
 Sanity check (will be run by CI too):
 
@@ -103,15 +107,15 @@ scripts/aks-discover.sh
 
 # Preview the changes
 az deployment group what-if \
-  --subscription d3c24b47-6f06-4152-8ade-6be38ba31c8c \
-  --resource-group sainitesh-test \
+  --subscription "$AZURE_SUBSCRIPTION_ID" \
+  --resource-group "$AZURE_RESOURCE_GROUP" \
   --template-file infra/main.bicep \
   --parameters infra/params/dev.bicepparam
 
 # Apply
 az deployment group create \
-  --subscription d3c24b47-6f06-4152-8ade-6be38ba31c8c \
-  --resource-group sainitesh-test \
+  --subscription "$AZURE_SUBSCRIPTION_ID" \
+  --resource-group "$AZURE_RESOURCE_GROUP" \
   --template-file infra/main.bicep \
   --parameters infra/params/dev.bicepparam
 ```

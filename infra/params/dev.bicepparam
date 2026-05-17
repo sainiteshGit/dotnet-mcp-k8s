@@ -1,6 +1,7 @@
 // T036 — dev environment parameter file.
-// Subscription: d3c24b47-6f06-4152-8ade-6be38ba31c8c
-// Resource Group: sainitesh-test
+// Subscription / Resource Group are NOT hard-coded here; they are supplied
+// at deploy time via $AZURE_SUBSCRIPTION_ID / $AZURE_RESOURCE_GROUP and
+// verified by scripts/assert-azure-context.sh.
 // Region: eastus (locked)
 
 using '../main.bicep'

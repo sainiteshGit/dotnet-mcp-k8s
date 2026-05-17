@@ -174,7 +174,7 @@
 
 - [X] T071 [P] [US2] Protocol-pinning test in [tests/McpServer.Tests/Protocol/PinnedVersionTests.cs](../../tests/McpServer.Tests/Protocol/PinnedVersionTests.cs) — asserts the SDK's advertised `ProtocolVersion` in the `initialize` response equals `2025-06-18` (Principle I)
 - [X] T072 [P] [US2] Pipeline test in [tests/McpServer.Tests/Pipeline/CorrelationIdHandlerTests.cs](../../tests/McpServer.Tests/Pipeline/CorrelationIdHandlerTests.cs) — inbound `_meta.correlationId` is forwarded as `X-Correlation-Id` on the backing call; absent inbound → ULID generated and echoed in tool response (FR-041, FR-042)
-- [ ] T073 [P] [US2] Pipeline test in [tests/McpServer.Tests/Pipeline/ResiliencePipelineTests.cs](../../tests/McpServer.Tests/Pipeline/ResiliencePipelineTests.cs) — Polly v8 timeout + retry + circuit breaker stays within the 5 s budget (SC-009); unreachable upstream returns `upstream_unavailable` envelope (FR-044)
+- [X] T073 [P] [US2] Pipeline test in [tests/McpServer.Tests/Pipeline/ResiliencePipelineTests.cs](../../tests/McpServer.Tests/Pipeline/ResiliencePipelineTests.cs) — Polly v8 timeout + retry + circuit breaker stays within the 5 s budget (SC-009); unreachable upstream returns `upstream_unavailable` envelope (FR-044)
 - [X] T074 [P] [US2] Mutation-gate test in [tests/McpServer.Tests/Mutation/MutationGateTests.cs](../../tests/McpServer.Tests/Mutation/MutationGateTests.cs) — when `MCP_ALLOW_MUTATIONS` is unset/empty/`false`/any non-`true` value, every mutation tool returns the `mutations_disabled` envelope from [contracts/mcp-tools.md](./contracts/mcp-tools.md#mutation-gate-principle-ii) **without issuing any HTTP call** (verified by WireMock recording zero calls)
 - [ ] T075 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/CreateTaskToolTests.cs](../../tests/McpServer.Tests/Tools/CreateTaskToolTests.cs) using WireMock.Net (acceptance scenario 1)
 - [ ] T076 [P] [US2] Per-tool test in [tests/McpServer.Tests/Tools/ListTasksToolTests.cs](../../tests/McpServer.Tests/Tools/ListTasksToolTests.cs) — filters + pagination forwarded, page_size capped at 100 (scenario 2, FR-032)
@@ -186,15 +186,15 @@
 
 ### Backing client + resilience pipeline (after tests above are RED)
 
-- [ ] T082 [P] [US2] Implement backing DTOs mirroring [contracts/webapp-openapi.yaml](./contracts/webapp-openapi.yaml) in [src/McpServer/Backing/TaskDtos.cs](../../src/McpServer/Backing/TaskDtos.cs)
-- [ ] T083 [US2] Implement `ITaskApiClient` + typed `HttpClient` `TaskApiClient` in [src/McpServer/Backing/TaskApiClient.cs](../../src/McpServer/Backing/TaskApiClient.cs) covering all 6 backing endpoints
-- [ ] T084 [US2] Implement `CorrelationIdHandler` `DelegatingHandler` in [src/McpServer/Pipeline/CorrelationIdHandler.cs](../../src/McpServer/Pipeline/CorrelationIdHandler.cs) — reads ambient correlation id (LogContext / AsyncLocal) and sets `X-Correlation-Id` — T072 turns GREEN
-- [ ] T085 [US2] Configure `Microsoft.Extensions.Http.Resilience` pipeline (Polly v8: total-request-timeout, retry with jitter, circuit breaker) on the typed client in `src/McpServer/Program.cs` per [research.md](./research.md) §2; bounded ≤ 5 s — T073 turns GREEN
+- [X] T082 [P] [US2] Implement backing DTOs mirroring [contracts/webapp-openapi.yaml](./contracts/webapp-openapi.yaml) in [src/McpServer/Backing/TaskDtos.cs](../../src/McpServer/Backing/TaskDtos.cs)
+- [X] T083 [US2] Implement `ITaskApiClient` + typed `HttpClient` `TaskApiClient` in [src/McpServer/Backing/TaskApiClient.cs](../../src/McpServer/Backing/TaskApiClient.cs) covering all 6 backing endpoints
+- [X] T084 [US2] Implement `CorrelationIdHandler` `DelegatingHandler` in [src/McpServer/Pipeline/CorrelationIdHandler.cs](../../src/McpServer/Pipeline/CorrelationIdHandler.cs) — reads ambient correlation id (LogContext / AsyncLocal) and sets `X-Correlation-Id` — T072 turns GREEN
+- [X] T085 [US2] Configure `Microsoft.Extensions.Http.Resilience` pipeline (Polly v8: total-request-timeout, retry with jitter, circuit breaker) on the typed client in `src/McpServer/Program.cs` per [research.md](./research.md) §2; bounded ≤ 5 s — T073 turns GREEN
 
 ### Mutation gate + tool registrations
 
 - [ ] T086 [US2] Implement `MutationGate` reading `MCP_ALLOW_MUTATIONS` (case-insensitive `true`) in [src/McpServer/Mutation/MutationGate.cs](../../src/McpServer/Mutation/MutationGate.cs); implement `MutationsDisabledResult` matching the [contracts/mcp-tools.md](./contracts/mcp-tools.md#structured-mutations_disabled-response) envelope — T074 turns GREEN
-- [ ] T087 [US2] Implement `ErrorTranslator` in [src/McpServer/Tools/ErrorTranslator.cs](../../src/McpServer/Tools/ErrorTranslator.cs) mapping backing `ErrorEnvelope` → MCP `isError:true` envelope (FR-043) and circuit/timeout failures → `upstream_unavailable` (FR-044)
+- [X] T087 [US2] Implement `ErrorTranslator` in [src/McpServer/Tools/ErrorTranslator.cs](../../src/McpServer/Tools/ErrorTranslator.cs) mapping backing `ErrorEnvelope` → MCP `isError:true` envelope (FR-043) and circuit/timeout failures → `upstream_unavailable` (FR-044)
 - [ ] T088 [P] [US2] Implement `CreateTaskTool` in [src/McpServer/Tools/CreateTaskTool.cs](../../src/McpServer/Tools/CreateTaskTool.cs) — gated by `MutationGate` — T075 turns GREEN
 - [ ] T089 [P] [US2] Implement `ListTasksTool` in [src/McpServer/Tools/ListTasksTool.cs](../../src/McpServer/Tools/ListTasksTool.cs) — T076 turns GREEN
 - [ ] T090 [P] [US2] Implement `GetTaskTool` in [src/McpServer/Tools/GetTaskTool.cs](../../src/McpServer/Tools/GetTaskTool.cs) — T077 turns GREEN

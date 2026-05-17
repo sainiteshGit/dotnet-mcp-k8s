@@ -11,5 +11,5 @@ namespace McpServer.Protocol;
 public static class PinnedProtocolVersion
 {
     /// <summary>Pinned MCP spec date (YYYY-MM-DD).</summary>
-    public const string Value = "PLACEHOLDER-WILL-FAIL-T071";
+    public const string Value = "2025-06-18";
 }

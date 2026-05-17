@@ -28,11 +28,18 @@ public static class MutationsDisabledResult
         ArgumentException.ThrowIfNullOrWhiteSpace(toolName);
         ArgumentException.ThrowIfNullOrWhiteSpace(correlationId);
 
-        // Stub returns empty/wrong shape so MutationGateTests fail until impl is real.
-        return new CallToolResult { IsError = false, Content = [] };
+        return new CallToolResult
+        {
+            IsError = true,
+            Content =
+            [
+                new TextContentBlock { Text = UserFacingText },
+            ],
+            Meta = BuildMeta(toolName, correlationId),
+        };
     }
 
-    internal static JsonObject BuildMetaForTests(string toolName, string correlationId) =>
+    private static JsonObject BuildMeta(string toolName, string correlationId) =>
         new()
         {
             ["correlationId"] = correlationId,

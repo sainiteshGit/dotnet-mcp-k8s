@@ -23,8 +23,11 @@ public sealed class MutationGate
     public MutationGate(IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
-        // Stub: hard-coded false until impl reads configuration[ConfigKey].
-        _enabled = false;
+        var raw = configuration[ConfigKey];
+        // Strict: only the literal value "true" (case-insensitive) enables
+        // mutations. Trim/whitespace/aliases like "1" or "yes" are intentionally
+        // rejected so Principle II is not accidentally bypassed by a typo.
+        _enabled = string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase);
     }
 
     public bool IsEnabled => _enabled;

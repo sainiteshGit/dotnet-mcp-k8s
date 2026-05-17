@@ -1,10 +1,15 @@
 name: ci
 
+# Temporarily disabled: manual-only trigger until Azure repo variables/secrets
+# (AZURE_SUBSCRIPTION_ID, AZURE_RESOURCE_GROUP, AZURE_REGION, AZURE_CLIENT_ID,
+# AZURE_TENANT_ID) are configured. Restore push/pull_request triggers below
+# to re-enable automatic runs.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
 
 # Constitution: GitHub OIDC -> UAMI; no client secret anywhere.
 permissions:
